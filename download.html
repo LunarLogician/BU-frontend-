@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download BU Assistant - Payment Confirmed</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .download-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0E5CAD 0%, #1B76D0 100%);
+            color: white;
+            padding: 20px;
+        }
+        .download-card {
+            background: white;
+            color: #122033;
+            padding: 60px 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .check-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: bounce 0.6s;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .download-card h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #2E7D32;
+        }
+        .download-card p {
+            color: #5B6B7E;
+            margin-bottom: 32px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .plan-info {
+            background: #F4F7FB;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            text-align: left;
+        }
+        .plan-info strong {
+            color: #0E5CAD;
+        }
+        .download-btn {
+            background: linear-gradient(135deg, #0E5CAD, #1B76D0);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(14, 92, 173, 0.3);
+        }
+        .email-btn {
+            background: transparent;
+            color: #0E5CAD;
+            border: 2px solid #0E5CAD;
+        }
+        .email-btn:hover {
+            background: #F4F7FB;
+        }
+        .security-note {
+            background: #E3F2FD;
+            border-left: 4px solid #0E5CAD;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #1565C0;
+            margin-top: 24px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid #F4F7FB;
+            border-top: 4px solid #0E5CAD;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="download-section">
+        <div class="download-card">
+            <div class="check-icon">✓</div>
+            <h1>Payment Confirmed!</h1>
+            <p>Thank you for your purchase. Your download link is ready.</p>
+            
+            <div class="plan-info" id="planInfo">
+                <p><strong>Plan:</strong> <span id="planName">Loading...</span></p>
+                <p><strong>What you get:</strong></p>
+                <ul id="featuresList" style="margin-top: 8px; margin-left: 16px;"></ul>
+            </div>
+            
+            <button class="download-btn" id="downloadBtn" onclick="startDownload()">
+                Download BU Assistant APK
+            </button>
+            
+            <button class="download-btn email-btn" onclick="sendEmailLink()">
+                Send Download Link to Email
+            </button>
+            
+            <div class="loading" id="loadingState">
+                <p>Preparing your download...</p>
+                <div class="spinner"></div>
+            </div>
+            
+            <div class="security-note">
+                <strong>🔒 Secure Download:</strong> APK is signed with our production certificate. Your device may show a warning about unknown sources — this is normal. You can safely install.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const plan = urlParams.get('plan') || 'pro';
+        const token = urlParams.get('token');
+
+        const PLANS = {
+            basic: {
+                name: 'Basic Plan (₨280)',
+                apk: 'BU_Assistant_v1.1.0_BASIC.apk',
+                features: [
+                    'View Timetable',
+                    'Track Attendance',
+                    'Class Alarms (30 min before)',
+                    'Background Auto-Sync',
+                ]
+            },
+            pro: {
+                name: 'Pro Plan (₨450/month)',
+                apk: 'BU_Assistant_v1.1.0_PRO.apk',
+                features: [
+                    'Everything in Basic +',
+                    'Assignments Tracker',
+                    'Quiz Marks & Grades',
+                    'Deadline Notifications',
+                    'Advanced Filtering',
+                    'Priority Support',
+                ]
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPlanInfo();
+        });
+
+        function loadPlanInfo() {
+            const planConfig = PLANS[plan] || PLANS.pro;
+            document.getElementById('planName').textContent = planConfig.name;
+            
+            const featuresList = document.getElementById('featuresList');
+            featuresList.innerHTML = planConfig.features
+                .map(f => `<li>${f}</li>`)
+                .join('');
+        }
+
+        function startDownload() {
+            const planConfig = PLANS[plan] || PLANS.pro;
+            const fileName = planConfig.apk;
+            
+            // Update button
+            const btn = document.getElementById('downloadBtn');
+            btn.textContent = 'Downloading...';
+            btn.disabled = true;
+            
+            // Create download link
+            const apkUrl = `/apks/${fileName}`;
+            
+            // Method 1: Fetch and trigger download
+            fetch(apkUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('APK not found');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    // Re-enable button
+                    btn.textContent = 'Download BU Assistant APK';
+                    btn.disabled = false;
+                    
+                    // Show success toast
+                    showMessage('Download started! Check your downloads folder.', 'success');
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    btn.textContent = 'Download BU Assistant APK';
+                    btn.disabled = false;
+                    showMessage('Download failed. Please try again or contact support.', 'error');
+                });
+        }
+
+        function sendEmailLink() {
+            const planConfig = PLANS[plan] || PLANS.pro;
+            const email = prompt('Enter your email address:');
+            
+            if (!email || !isValidEmail(email)) {
+                showMessage('Please enter a valid email address.', 'error');
+                return;
+            }
+            
+            // Send to backend
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            fetch('/api/send-download-link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    plan: plan,
+                    apk: planConfig.apk,
+                    token: token
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(`Download link sent to ${email}!`, 'success');
+                    btn.textContent = 'Send Download Link to Email';
+                    btn.disabled = false;
+                } else {
+                    throw new Error(data.error || 'Failed to send email');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to send email. Please try again.', 'error');
+                btn.textContent = 'Send Download Link to Email';
+                btn.disabled = false;
+            });
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function showMessage(msg, type = 'info') {
+            const toast = document.createElement('div');
+            toast.textContent = msg;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                background: ${type === 'success' ? '#2E7D32' : '#D32F2F'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                font-size: 14px;
+                z-index: 1000;
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

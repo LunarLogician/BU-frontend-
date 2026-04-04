@@ -1,0 +1,55 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.classpath
+*.sublime-project
+*.sublime-workspace
+
+# Build and distribution
+dist/
+build/
+*.zip
+*.tar.gz
+
+# Node modules (if using build tools)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Private/sensitive files
+config.local.js
+secrets.json
+private/
+.credentials
+
+# Testing
+coverage/
+.nyc_output/
+
+# APK files (if storing locally)
+*.apk
