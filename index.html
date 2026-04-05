@@ -853,7 +853,7 @@ const CHECKOUT_URL = 'https://devpostai.lemonsqueezy.com/checkout/buy/a8dca598-9
 
   function trackAndRedirect(email, role) {
     console.log('🛒 CHECKOUT INITIATED:', { email, role, timestamp: new Date().toISOString() });
-    fetch('https://unsharable-radiophonic-nicolle.ngrok-free.dev/api/track-download', {
+    fetch('https://buic-backend-v2.vercel.app/api/track-download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, role, ts: Date.now() })
