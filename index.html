@@ -704,6 +704,87 @@
 .not-student-msg { text-align: center; padding: 16px 0 8px; }
 .not-student-msg .ns-icon { font-size: 36px; margin-bottom: 10px; }
 .not-student-msg p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+/* ══ MOBILE-FIRST RESPONSIVE ══════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  /* Nav */
+  nav { padding: 10px 16px; }
+  .nav-logo-text { font-size: 15px; }
+  .nav-cta { padding: 8px 14px; font-size: 12px; }
+
+  /* Container */
+  .container { padding: 0 16px; }
+
+  /* Hero */
+  .hero { min-height: 100svh; padding: 88px 0 60px; text-align: center; }
+  .hero-content { max-width: 100%; }
+  .hero h1 { font-size: clamp(36px, 10vw, 52px); letter-spacing: -1.5px; }
+  .hero p { font-size: 15px; max-width: 100%; }
+  .hero-actions { justify-content: center; flex-direction: column; gap: 10px; width: 100%; }
+  .hero-actions .btn-primary,
+  .hero-actions .btn-outline { width: 100%; padding: 14px 20px; font-size: 15px; }
+  .hero-stats { justify-content: center; gap: 24px; }
+  .hero-stat .num { font-size: 26px; }
+  .hero-badge { font-size: 11px; }
+
+  /* Sections */
+  section { padding: 64px 0; }
+  .sec-title { font-size: clamp(28px, 8vw, 40px); letter-spacing: -1px; }
+  .sec-sub { font-size: 15px; }
+
+  /* Features grid */
+  .feat-grid { margin-top: 36px; }
+  .feat-cell { padding: 24px 20px; }
+
+  /* Pricing */
+  .pricing-grid { margin-top: 36px; gap: 14px; }
+  .price-card { padding: 26px 22px; }
+  .plan-amt { font-size: 44px; }
+
+  /* Testimonials */
+  .testi-grid { gap: 10px; margin-top: 36px; }
+  .testi-card { padding: 20px; }
+
+  /* FAQ */
+  .faq-wrap { margin-top: 36px; }
+  .faq-q { font-size: 14px; }
+
+  /* CTA */
+  .cta-sec { padding: 80px 0; }
+  .cta-sec h2 { font-size: clamp(28px, 8vw, 42px); letter-spacing: -1px; }
+  .cta-sec p { font-size: 15px; margin-bottom: 28px; }
+  .cta-btns { flex-direction: column; align-items: stretch; padding: 0 4px; }
+  .cta-btns .btn-primary { width: 100%; font-size: 15px; padding: 15px 20px; }
+
+  /* Footer */
+  .foot-bottom { flex-direction: column; text-align: center; gap: 8px; }
+
+  /* Modal — bottom sheet on mobile */
+  .modal-ov { align-items: flex-end; padding: 0; }
+  .modal-box {
+    border-radius: 22px 22px 0 0;
+    max-width: 100%;
+    max-height: 92svh;
+    overflow-y: auto;
+    padding: 28px 20px 32px;
+    animation: mInMobile 0.35s cubic-bezier(0.32,0.72,0,1);
+  }
+  @keyframes mInMobile { from { transform: translateY(100%) } to { transform: translateY(0) } }
+  .who-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .who-btn { padding: 14px 8px; font-size: 13px; min-height: 72px; }
+  .btn-pay, .modal-field input { min-height: 48px; font-size: 15px; }
+
+  /* Toast — center at bottom */
+  .toast { left: 16px; right: 16px; bottom: 16px; max-width: 100%; text-align: center; }
+
+  /* Buttons touch targets */
+  .btn-primary, .btn-outline, .btn-plan, .btn-pay, .nav-cta { min-height: 44px; }
+}
+
+@media (max-width: 380px) {
+  .hero h1 { font-size: 32px; }
+  .who-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 <div class="modal-ov" id="modal">
