@@ -844,7 +844,9 @@
   });
 
   const modal = document.getElementById('modal');
-const CHECKOUT_URL = 'https://devpostai.lemonsqueezy.com/checkout/buy/a8dca598-9364-4ee1-85fc-7c90c9e95633';
+  const CHECKOUT_UUID = 'a8dca598-9364-4ee1-85fc-7c90c9e95633';
+  const CHECKOUT_BASE = 'https://devpostai.lemonsqueezy.com/checkout/buy';
+  const VERIFY_PAGE = 'https://bu-frontend-three.vercel.app/verify-payment.html';
 
   let selectedRole = 'student';
 
@@ -853,13 +855,18 @@ const CHECKOUT_URL = 'https://devpostai.lemonsqueezy.com/checkout/buy/a8dca598-9
   }
 
   function trackAndRedirect(email, role) {
+    // Store email locally so verify page can use it
+    sessionStorage.setItem('pending_email', email);
+    
     fetch('https://buic-backend-v2.vercel.app/api/track-download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, role, ts: Date.now() })
     }).catch(() => {});
+    
     showToast('Redirecting to secure checkout...');
-    setTimeout(() => { window.location.href = CHECKOUT_URL + '?checkout[email]=' + encodeURIComponent(email); }, 600);
+    const checkoutUrl = `${CHECKOUT_BASE}/${CHECKOUT_UUID}?checkout[email]=${encodeURIComponent(email)}&checkout[custom][verify_url]=${encodeURIComponent(VERIFY_PAGE)}`;
+    setTimeout(() => { window.location.href = checkoutUrl; }, 600);
   }
 
   document.querySelectorAll('.btn-buy').forEach(b => {

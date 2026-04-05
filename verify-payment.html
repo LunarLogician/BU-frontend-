@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifying Payment - BU Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0E5CAD 0%, #1B76D0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .spinner {
+            border: 4px solid #F4F7FB;
+            border-top: 4px solid #0E5CAD;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h1 {
+            color: #0E5CAD;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .success {
+            display: none;
+        }
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: bounce 0.6s;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .success h1 {
+            color: #2E7D32;
+        }
+        .error {
+            display: none;
+        }
+        .error h1 {
+            color: #C0392B;
+        }
+        .error p {
+            color: #C0392B;
+        }
+        .btn {
+            background: linear-gradient(135deg, #0E5CAD, #1B76D0);
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(14, 92, 173, 0.3);
+        }
+        .btn-secondary {
+            background: #F4F7FB;
+            color: #0E5CAD;
+            border: 2px solid #0E5CAD;
+        }
+        .btn-secondary:hover {
+            background: #E8F0F7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- VERIFYING STATE -->
+        <div id="verifying">
+            <div class="spinner"></div>
+            <h1>Verifying Payment...</h1>
+            <p>Please wait while we confirm your payment.</p>
+        </div>
+
+        <!-- SUCCESS STATE -->
+        <div id="success" class="success">
+            <div class="success-icon">✓</div>
+            <h1>Payment Verified!</h1>
+            <p>Your payment has been confirmed. You can now download the BU Assistant APK.</p>
+            <button class="btn" onclick="goToDownload()">Go to Download Page →</button>
+        </div>
+
+        <!-- ERROR STATE -->
+        <div id="error" class="error">
+            <h1>Verification Failed</h1>
+            <p id="errorMsg" style="margin-bottom: 12px;"></p>
+            <button class="btn btn-secondary" onclick="goToHome()">← Back to Home</button>
+            <button class="btn" onclick="location.reload()" style="margin-top: 12px;">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND = 'https://buic-backend-v2.vercel.app';
+
+        async function verifyPayment() {
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get('order_id');
+            const email = sessionStorage.getItem('pending_email');
+
+            if (!orderId || !email) {
+                showError('Missing order information. Please try again.');
+                return;
+            }
+
+            try {
+                const resp = await fetch(`${BACKEND}/api/verify-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderId, email }),
+                });
+
+                if (!resp.ok) {
+                    const data = await resp.json();
+                    throw new Error(data.error || 'Payment verification failed');
+                }
+
+                const data = await resp.json();
+                console.log('✓ Payment verified:', data);
+                showSuccess();
+            } catch (e) {
+                console.error('Verification error:', e);
+                showError(e.message);
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('verifying').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showError(msg) {
+            document.getElementById('verifying').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('errorMsg').textContent = msg;
+        }
+
+        function goToDownload() {
+            window.location.href = 'download.html';
+        }
+
+        function goToHome() {
+            window.location.href = '/';
+        }
+
+        window.addEventListener('DOMContentLoaded', verifyPayment);
+    </script>
+</body>
+</html>
