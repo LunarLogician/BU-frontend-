@@ -4,7 +4,7 @@
 const LEMONSQUEEZY_CONFIG = {
     BASIC: {
         plan: 'basic',
-        product_id: '69a056a3-52f2-4bdd-a110-bd1aa2656449', // Basic plan - 280 Rs one-time
+        product_id: 'a8dca598-9364-4ee1-85fc-7c90c9e95633', // TEST variant - swap to 69a056a3 for live
         checkout_url: 'https://devpostai.lemonsqueezy.com/checkout/buy',
         apk: 'BU_Assistant_v1.1.0_BASIC.apk',
         price: 280
