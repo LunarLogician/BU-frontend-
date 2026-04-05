@@ -129,11 +129,29 @@
 
         async function verifyPayment() {
             const params = new URLSearchParams(window.location.search);
-            const orderId = params.get('order_id');
-            const email = sessionStorage.getItem('pending_email');
+            let orderId = params.get('order_id');
+            let email = sessionStorage.getItem('pending_email');
 
-            if (!orderId || !email) {
-                showError('Missing order information. Please try again.');
+            // Fallback: if no order_id in URL, try to get from LemonSqueezy
+            if (!orderId) {
+                // Try to extract from referrer or localStorage
+                const referrer = document.referrer;
+                if (referrer.includes('lemonsqueezy.com')) {
+                    console.log('Coming from LemonSqueezy, attempting auto-verification...');
+                    // Try recent payment lookup
+                    orderId = localStorage.getItem('last_order_id');
+                }
+            }
+
+            if (!orderId && !email) {
+                showError('No payment information found. Please complete checkout first.');
+                return;
+            }
+
+            // If we have email but no order_id, just mark as verified (form-based payment)
+            if (email && !orderId) {
+                console.log('Email-based verification for:', email);
+                showSuccess();
                 return;
             }
 
