@@ -150,42 +150,62 @@
         const BACKEND = 'https://buic-backend-v2.vercel.app';
 
         async function startDownload() {
-            const params = new URLSearchParams(window.location.search);
-            const email = params.get('email');
-
             try {
-                // Call backend to get signed URL (Firebase Storage direct download)
+                const params = new URLSearchParams(window.location.search);
+                const email = params.get('email');
+
+                // If no email from URL, download directly from Firebase Storage
+                if (!email) {
+                    const directUrl = 'https://storage.googleapis.com/buic-839ab.appspot.com/app-release.apk';
+                    gtag('event', 'apk_download', { event_category: 'conversion' });
+                    triggerDownload(directUrl);
+                    showSuccess();
+                    return;
+                }
+
+                // Try backend first for signed URL
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email }),
                 });
-                const data = await resp.json();
 
                 if (!resp.ok) {
-                    throw new Error(data.error || 'Failed to get download link');
+                    // Fallback to direct download
+                    console.warn('Backend unavailable, using direct download');
+                    const directUrl = 'https://storage.googleapis.com/buic-839ab.appspot.com/app-release.apk';
+                    gtag('event', 'apk_download', { event_category: 'conversion' });
+                    triggerDownload(directUrl);
+                    showSuccess();
+                    return;
                 }
 
-                // Track download conversion
+                const data = await resp.json();
                 gtag('event', 'apk_download', { event_category: 'conversion' });
-                
-                // Trigger download
-                const a = document.createElement('a');
-                a.href = data.url;
-                a.download = 'BU_Assistant.apk';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
-                // Show success
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('successState').style.display = 'block';
+                triggerDownload(data.url);
+                showSuccess();
             } catch (e) {
                 console.error('Download error:', e);
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('errorState').style.display = 'block';
-                document.getElementById('errMsg').textContent = 'Download failed. Try again.';
+                // Final fallback: download directly
+                const directUrl = 'https://storage.googleapis.com/buic-839ab.appspot.com/app-release.apk';
+                gtag('event', 'apk_download', { event_category: 'conversion' });
+                triggerDownload(directUrl);
+                showSuccess();
             }
+        }
+
+        function triggerDownload(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'BU_Assistant.apk';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function showSuccess() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('successState').style.display = 'block';
         }
 
         // Auto-download on page load
