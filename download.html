@@ -176,7 +176,15 @@
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    errEl.textContent = data.error || 'Something went wrong.';
+                    const errorMsg = data.error || 'Something went wrong.';
+                    // Show user-friendly message, hide technical Firebase errors
+                    if (errorMsg.includes('FAILED_PRECONDITION')) {
+                        errEl.textContent = 'System is initializing. Please try again in 30 seconds.';
+                    } else if (errorMsg.includes('No purchase found')) {
+                        errEl.textContent = 'No purchase found. Please use the email you paid with.';
+                    } else {
+                        errEl.textContent = errorMsg;
+                    }
                     btn.disabled = false;
                     btn.textContent = '⬇ Get My Download';
                     return;
