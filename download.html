@@ -321,7 +321,15 @@
             showLoading();
 
             try {
-                // Call backend to verify email in paid_orders collection
+                // FIRST: Store email to paid_orders
+                await fetch(`${BACKEND}/api/track-download`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, role: userType }),
+                });
+                console.log('✓ Email stored to paid_orders');
+
+                // THEN: Verify and get download URL
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
