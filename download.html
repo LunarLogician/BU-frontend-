@@ -219,8 +219,8 @@
                         </div>
                     </div>
 
-                    <!-- Enrollment ID input -->
-                    <div class="form-group">
+                    <!-- Enrollment ID input (only for students) -->
+                    <div id="enrollmentGroup" class="form-group">
                         <label for="enrollment">Enrollment ID *</label>
                         <input type="text" id="enrollment" name="enrollment" placeholder="Your BU enrollment ID" required>
                         <div class="privacy-note">
@@ -345,7 +345,8 @@
                 return;
             }
 
-            if (!enrollment) {
+            // Enrollment ID only required for students
+            if (role === 'student' && !enrollment) {
                 showError('Please enter your enrollment ID.');
                 return;
             }
@@ -387,7 +388,31 @@
         }
 
         // Show form on page load
-        window.addEventListener('DOMContentLoaded', showForm);
+        // Toggle enrollment field visibility based on role
+        function toggleEnrollmentField() {
+            const role = document.querySelector('input[name="userType"]:checked').value;
+            const enrollmentGroup = document.getElementById('enrollmentGroup');
+            const enrollmentInput = document.getElementById('enrollment');
+            
+            if (role === 'student') {
+                enrollmentGroup.style.display = 'block';
+                enrollmentInput.required = true;
+            } else {
+                enrollmentGroup.style.display = 'none';
+                enrollmentInput.required = false;
+                enrollmentInput.value = '';  // Clear enrollment value for non-students
+            }
+        }
+
+        // Add event listeners to radio buttons
+        document.querySelectorAll('input[name="userType"]').forEach(radio => {
+            radio.addEventListener('change', toggleEnrollmentField);
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            toggleEnrollmentField();  // Set initial state
+            showForm();
+        });
     </script>
 </body>
 </html>
