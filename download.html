@@ -154,9 +154,11 @@
                 const params = new URLSearchParams(window.location.search);
                 const email = params.get('email');
 
-                // If no email from URL, download directly from Firebase Storage
+                // Direct Firebase Storage URL
+                const directUrl = 'https://buic-839ab.firebasestorage.app/app-release.apk';
+
+                // If no email from URL, download directly
                 if (!email) {
-                    const directUrl = 'https://storage.googleapis.com/buic-839ab.appspot.com/app-release.apk';
                     gtag('event', 'apk_download', { event_category: 'conversion' });
                     triggerDownload(directUrl);
                     showSuccess();
@@ -173,7 +175,6 @@
                 if (!resp.ok) {
                     // Fallback to direct download
                     console.warn('Backend unavailable, using direct download');
-                    const directUrl = 'https://storage.googleapis.com/buic-839ab.appspot.com/app-release.apk';
                     gtag('event', 'apk_download', { event_category: 'conversion' });
                     triggerDownload(directUrl);
                     showSuccess();
@@ -187,7 +188,7 @@
             } catch (e) {
                 console.error('Download error:', e);
                 // Final fallback: download directly
-                const directUrl = 'https://storage.googleapis.com/buic-839ab.appspot.com/app-release.apk';
+                const directUrl = 'https://buic-839ab.firebasestorage.app/app-release.apk';
                 gtag('event', 'apk_download', { event_category: 'conversion' });
                 triggerDownload(directUrl);
                 showSuccess();
