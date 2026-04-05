@@ -134,8 +134,11 @@
                 <h1 style="color:#C0392B;">Download Failed</h1>
                 <p id="errMsg" style="color:#C0392B;margin:16px 0;"></p>
                 <button class="download-btn email-btn" onclick="location.reload()" style="border-color:#0E5CAD;color:#0E5CAD;">
-                    ↻ Retry
+                    ↻ Reload
                 </button>
+                <p style="color:#999;font-size:12px;margin-top:20px;">
+                    Make sure you're using the download link from your payment confirmation email.
+                </p>
             </div>
 
             <div class="security-note" style="margin-top:20px;">
@@ -154,44 +157,35 @@
                 const params = new URLSearchParams(window.location.search);
                 const email = params.get('email');
 
-                // Direct Firebase Storage URL (correct format)
-                const directUrl = 'https://storage.googleapis.com/buic-839ab/app-release.apk';
-
-                // If no email from URL, download directly
+                // Email is REQUIRED (from LemonSqueezy redirect)
                 if (!email) {
-                    gtag('event', 'apk_download', { event_category: 'conversion' });
-                    triggerDownload(directUrl);
-                    showSuccess();
+                    showError('Invalid download link. Please use the link from your payment confirmation email.');
                     return;
                 }
 
-                // Try backend first for signed URL
+                // Call backend to get signed URL
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email }),
                 });
 
+                const data = await resp.json();
+
                 if (!resp.ok) {
-                    // Fallback to direct download
-                    console.warn('Backend unavailable, using direct download');
-                    gtag('event', 'apk_download', { event_category: 'conversion' });
-                    triggerDownload(directUrl);
-                    showSuccess();
+                    showError(data.error || 'Failed to get download link');
                     return;
                 }
 
-                const data = await resp.json();
+                // Track download
                 gtag('event', 'apk_download', { event_category: 'conversion' });
+                
+                // Trigger download
                 triggerDownload(data.url);
                 showSuccess();
             } catch (e) {
                 console.error('Download error:', e);
-                // Final fallback: download directly
-                const directUrl = 'https://storage.googleapis.com/buic-839ab/app-release.apk';
-                gtag('event', 'apk_download', { event_category: 'conversion' });
-                triggerDownload(directUrl);
-                showSuccess();
+                showError('Network error. Please try again.');
             }
         }
 
@@ -207,6 +201,12 @@
         function showSuccess() {
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('successState').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errMsg').textContent = message;
         }
 
         // Auto-download on page load
