@@ -134,11 +134,8 @@
                 <h1 style="color:#C0392B;">Download Failed</h1>
                 <p id="errMsg" style="color:#C0392B;margin:16px 0;"></p>
                 <button class="download-btn email-btn" onclick="location.reload()" style="border-color:#0E5CAD;color:#0E5CAD;">
-                    ↻ Reload
+                    ↻ Retry
                 </button>
-                <p style="color:#999;font-size:12px;margin-top:20px;">
-                    Make sure you're using the download link from your payment confirmation email.
-                </p>
             </div>
 
             <div class="security-note" style="margin-top:20px;">
@@ -154,38 +151,24 @@
 
         async function startDownload() {
             try {
-                const params = new URLSearchParams(window.location.search);
-                const email = params.get('email');
-
-                // Email is REQUIRED (from LemonSqueezy redirect)
-                if (!email) {
-                    showError('Invalid download link. Please use the link from your payment confirmation email.');
-                    return;
-                }
-
-                // Call backend to get signed URL
+                // Get signed URL from backend (no email needed - LemonSqueezy already verified payment)
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email }),
+                    body: JSON.stringify({}),
                 });
 
-                const data = await resp.json();
-
                 if (!resp.ok) {
-                    showError(data.error || 'Failed to get download link');
-                    return;
+                    throw new Error('Failed to get download URL');
                 }
 
-                // Track download
+                const data = await resp.json();
                 gtag('event', 'apk_download', { event_category: 'conversion' });
-                
-                // Trigger download
                 triggerDownload(data.url);
                 showSuccess();
             } catch (e) {
                 console.error('Download error:', e);
-                showError('Network error. Please try again.');
+                showError('Download failed. Please refresh and try again.');
             }
         }
 
