@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6XHQ2721SN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-6XHQ2721SN');
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download BU Assistant - Payment Confirmed</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         .download-section {
             min-height: 100vh;
@@ -122,181 +129,42 @@
             </div>
             
             <button class="download-btn" id="downloadBtn" onclick="startDownload()">
-                Download BU Assistant APK
+                ⬇ Download BU Assistant APK
             </button>
-            
-            <button class="download-btn email-btn" onclick="sendEmailLink()">
-                Send Download Link to Email
-            </button>
-            
-            <div class="loading" id="loadingState">
-                <p>Preparing your download...</p>
-                <div class="spinner"></div>
+
+            <div class="security-note" style="margin-top:20px;">
+                <strong>📱 Android users — file goes to Downloads folder:</strong><br><br>
+                After tapping download, open your <strong>Files / My Files</strong> app → <strong>Downloads</strong> → tap <strong>BU_Assistant.apk</strong> → tap <strong>Install</strong>.<br><br>
+                If asked about "unknown sources", go to <strong>Settings → Apps → (your browser) → Install Unknown Apps → Allow</strong>.
             </div>
-            
-            <div class="security-note">
-                <strong>🔒 Secure Download:</strong> APK is signed with our production certificate. Your device may show a warning about unknown sources — this is normal. You can safely install.
+
+            <div class="security-note" style="margin-top:12px; background:#E8F5E9; border-color:#2E7D32; color:#1B5E20;">
+                <strong>🔒 Safe to install:</strong> APK is signed with our production certificate.
             </div>
         </div>
     </div>
 
     <script>
-        // Parse URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const plan = urlParams.get('plan') || 'pro';
-        const token = urlParams.get('token');
-
-        const PLANS = {
-            basic: {
-                name: 'Basic Plan (₨280)',
-                apk: 'BU_Assistant_v1.1.0_BASIC.apk',
-                features: [
-                    'View Timetable',
-                    'Track Attendance',
-                    'Class Alarms (30 min before)',
-                    'Background Auto-Sync',
-                ]
-            },
-            pro: {
-                name: 'Pro Plan (₨450/month)',
-                apk: 'BU_Assistant_v1.1.0_PRO.apk',
-                features: [
-                    'Everything in Basic +',
-                    'Assignments Tracker',
-                    'Quiz Marks & Grades',
-                    'Deadline Notifications',
-                    'Advanced Filtering',
-                    'Priority Support',
-                ]
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPlanInfo();
-        });
-
-        function loadPlanInfo() {
-            const planConfig = PLANS[plan] || PLANS.pro;
-            document.getElementById('planName').textContent = planConfig.name;
-            
-            const featuresList = document.getElementById('featuresList');
-            featuresList.innerHTML = planConfig.features
-                .map(f => `<li>${f}</li>`)
-                .join('');
-        }
+        // ── SET THIS to your GitHub Release direct download URL ──────────────
+        const APK_URL = 'REPLACE_WITH_APK_DIRECT_DOWNLOAD_URL';
+        // Example: 'https://github.com/LunarLogician/buic-app/releases/download/v1.0.0/BU_Assistant.apk'
+        // ─────────────────────────────────────────────────────────────────────
 
         function startDownload() {
-            const planConfig = PLANS[plan] || PLANS.pro;
-            const fileName = planConfig.apk;
-            
-            // Update button
-            const btn = document.getElementById('downloadBtn');
-            btn.textContent = 'Downloading...';
-            btn.disabled = true;
-            
-            // Create download link
-            const apkUrl = `/apks/${fileName}`;
-            
-            // Method 1: Fetch and trigger download
-            fetch(apkUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('APK not found');
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                    
-                    // Re-enable button
-                    btn.textContent = 'Download BU Assistant APK';
-                    btn.disabled = false;
-                    
-                    // Show success toast
-                    showMessage('Download started! Check your downloads folder.', 'success');
-                })
-                .catch(error => {
-                    console.error('Download error:', error);
-                    btn.textContent = 'Download BU Assistant APK';
-                    btn.disabled = false;
-                    showMessage('Download failed. Please try again or contact support.', 'error');
-                });
-        }
-
-        function sendEmailLink() {
-            const planConfig = PLANS[plan] || PLANS.pro;
-            const email = prompt('Enter your email address:');
-            
-            if (!email || !isValidEmail(email)) {
-                showMessage('Please enter a valid email address.', 'error');
+            if (!APK_URL || APK_URL === 'REPLACE_WITH_APK_DIRECT_DOWNLOAD_URL') {
+                alert('Download link not yet configured. Please check your email for the download link sent by LemonSqueezy.');
                 return;
             }
-            
-            // Send to backend
-            const btn = event.target;
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-            
-            fetch('/api/send-download-link', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: email,
-                    plan: plan,
-                    apk: planConfig.apk,
-                    token: token
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage(`Download link sent to ${email}!`, 'success');
-                    btn.textContent = 'Send Download Link to Email';
-                    btn.disabled = false;
-                } else {
-                    throw new Error(data.error || 'Failed to send email');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage('Failed to send email. Please try again.', 'error');
-                btn.textContent = 'Send Download Link to Email';
-                btn.disabled = false;
-            });
+            gtag('event', 'apk_download', { event_category: 'conversion' });
+            window.location.href = APK_URL;
         }
 
-        function isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        function showMessage(msg, type = 'info') {
-            const toast = document.createElement('div');
-            toast.textContent = msg;
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                padding: 16px 24px;
-                background: ${type === 'success' ? '#2E7D32' : '#D32F2F'};
-                color: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                font-size: 14px;
-                z-index: 1000;
-            `;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-        }
+        // Auto-trigger on page load
+        window.addEventListener('load', () => {
+            if (APK_URL && APK_URL !== 'REPLACE_WITH_APK_DIRECT_DOWNLOAD_URL') {
+                setTimeout(startDownload, 800);
+            }
+        });
     </script>
 </body>
 </html>
