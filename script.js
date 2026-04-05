@@ -4,18 +4,10 @@
 const LEMONSQUEEZY_CONFIG = {
     BASIC: {
         plan: 'basic',
-        product_id: '1416457', // Basic plan - 280 Rs one-time
-        checkout_url: 'https://buic.lemonsqueezy.com/checkout',
+        product_id: '69a056a3-52f2-4bdd-a110-bd1aa2656449', // Basic plan - 280 Rs one-time
+        checkout_url: 'https://devpostai.lemonsqueezy.com/checkout/buy',
         apk: 'BU_Assistant_v1.1.0_BASIC.apk',
         price: 280
-    },
-    PRO: {
-        plan: 'pro',
-        product_id: '1489779', // Pro plan - 450 Rs/month subscription
-        checkout_url: 'https://buic.lemonsqueezy.com/checkout',
-        apk: 'BU_Assistant_v1.1.0_PRO.apk',
-        price: 450,
-        recurring: true
     }
 };
 
@@ -86,15 +78,8 @@ async function startPaymentFlow(plan, price) {
             return;
         }
         
-        // Generate unique customer token
-        const customToken = generateCustomerToken({
-            plan: plan.toLowerCase(),
-            purchase_date: new Date().toISOString(),
-            price: price
-        });
-        
-        // Build checkout URL
-        const checkoutUrl = buildCheckoutUrl(config, customToken);
+        // Build checkout URL — token is generated server-side after payment
+        const checkoutUrl = buildCheckoutUrl(config);
         
         // Redirect to Lemonsqueezy checkout
         window.location.href = checkoutUrl;
@@ -105,22 +90,8 @@ async function startPaymentFlow(plan, price) {
     }
 }
 
-function buildCheckoutUrl(config, customToken) {
-    const params = new URLSearchParams({
-        checkout: config.product_id,
-        custom_token: customToken,
-        success_url: `${window.location.origin}/download.html?plan=${config.plan}&token=${customToken}`,
-        cancel_url: window.location.origin
-    });
-    
-    return `${config.checkout_url}?${params.toString()}`;
-}
-
-function generateCustomerToken(data) {
-    // Create a simple token encoding purchase info
-    // In production, sign this with a backend secret
-    const tokenData = JSON.stringify(data);
-    return btoa(tokenData); // Base64 encode
+function buildCheckoutUrl(config) {
+    return `${config.checkout_url}/${config.product_id}`;
 }
 
 function showToast(message, type = 'info') {
