@@ -263,6 +263,16 @@
     <script>
         const BACKEND = 'https://buic-backend-v2.vercel.app';
 
+        // ── Generate unique device ID ──────────────────────────────────
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('buic_device_id');
+            if (!deviceId) {
+                deviceId = 'dev_' + Math.random().toString(36).substr(2, 16) + '_' + Date.now();
+                localStorage.setItem('buic_device_id', deviceId);
+            }
+            return deviceId;
+        }
+
         function showForm() {
             document.getElementById('formState').style.display = 'block';
             document.getElementById('loadingState').style.display = 'none';
@@ -312,6 +322,7 @@
             
             const email = document.getElementById('email').value.trim().toLowerCase();
             const userType = document.querySelector('input[name="userType"]:checked').value;
+            const deviceId = getDeviceId();
 
             if (!email || !email.includes('@')) {
                 showError('Please enter a valid email address.');
@@ -321,19 +332,30 @@
             showLoading();
 
             try {
-                // FIRST: Store email to paid_orders
-                await fetch(`${BACKEND}/api/track-download`, {
+                // FIRST: Store email + device_id to paid_orders (get download hash)
+                const trackResp = await fetch(`${BACKEND}/api/track-download`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, role: userType }),
+                    body: JSON.stringify({ 
+                        email, 
+                        role: userType,
+                        device_id: deviceId 
+                    }),
                 });
-                console.log('✓ Email stored to paid_orders');
+                
+                if (!trackResp.ok) {
+                    throw new Error('Failed to register device');
+                }
+                console.log('✓ Device registered and email stored');
 
-                // THEN: Verify and get download URL
+                // THEN: Verify device hash and get download URL
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email }),
+                    body: JSON.stringify({ 
+                        email,
+                        device_id: deviceId 
+                    }),
                 });
 
                 if (!resp.ok) {
