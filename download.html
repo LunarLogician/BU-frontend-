@@ -118,24 +118,24 @@
 <body>
     <div class="download-section">
         <div class="download-card">
-            <div class="check-icon">✓</div>
-            <h1>Payment Confirmed!</h1>
-            <p>Enter the email address you used to pay and we'll start your download instantly.</p>
+            <div id="loadingState">
+                <div class="spinner"></div>
+                <h1>Preparing Your Download...</h1>
+                <p>We're getting your APK ready. This should take just a few seconds.</p>
+            </div>
 
-            <input
-                id="emailInput"
-                type="email"
-                placeholder="your@email.com"
-                style="width:100%;padding:14px 16px;font-size:16px;border:2px solid #D0D7E2;border-radius:10px;outline:none;box-sizing:border-box;margin-bottom:10px;"
-            />
-            <p id="errMsg" style="color:#C0392B;font-size:13px;margin:0 0 12px;min-height:18px;"></p>
+            <div id="successState" style="display:none;">
+                <div class="check-icon">✓</div>
+                <h1>Download Started!</h1>
+                <p>Your BU Assistant APK is downloading. If it didn't start, check your Downloads folder.</p>
+            </div>
 
-            <button class="download-btn" id="downloadBtn" onclick="getDownload()">
-                ⬇ Get My Download
-            </button>
-
-            <div id="successNote" style="display:none;" class="security-note" style="margin-top:20px;background:#E8F5E9;border-color:#2E7D32;color:#1B5E20;">
-                <strong>✓ Download started!</strong> If it didn't begin, check your Downloads folder.
+            <div id="errorState" style="display:none;">
+                <h1 style="color:#C0392B;">Download Failed</h1>
+                <p id="errMsg" style="color:#C0392B;margin:16px 0;"></p>
+                <button class="download-btn email-btn" onclick="location.reload()" style="border-color:#0E5CAD;color:#0E5CAD;">
+                    ↻ Retry
+                </button>
             </div>
 
             <div class="security-note" style="margin-top:20px;">
@@ -149,25 +149,12 @@
     <script>
         const BACKEND = 'https://buic-backend-v2.vercel.app';
 
-        async function getDownload(email = null) {
-            const emailInput = document.getElementById('emailInput');
-            const btn = document.getElementById('downloadBtn');
-            const errEl = document.getElementById('errMsg');
-            
-            if (!email) {
-                email = emailInput.value.trim();
-            }
-
-            errEl.textContent = '';
-            if (!email || !email.includes('@')) {
-                errEl.textContent = 'Please enter a valid email address.';
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Checking...';
+        async function startDownload() {
+            const params = new URLSearchParams(window.location.search);
+            const email = params.get('email');
 
             try {
+                // Call backend to get signed URL (Firebase Storage direct download)
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -176,24 +163,13 @@
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    const errorMsg = data.error || 'Something went wrong.';
-                    // Show user-friendly message, hide technical Firebase errors
-                    if (errorMsg.includes('FAILED_PRECONDITION')) {
-                        errEl.textContent = 'System is initializing. Please try again in 30 seconds.';
-                    } else if (errorMsg.includes('No purchase found')) {
-                        errEl.textContent = 'No purchase found. Please use the email you paid with.';
-                    } else {
-                        errEl.textContent = errorMsg;
-                    }
-                    btn.disabled = false;
-                    btn.textContent = '⬇ Get My Download';
-                    return;
+                    throw new Error(data.error || 'Failed to get download link');
                 }
 
-                // Success — trigger download
+                // Track download conversion
                 gtag('event', 'apk_download', { event_category: 'conversion' });
-                btn.textContent = '✓ Download Starting...';
-
+                
+                // Trigger download
                 const a = document.createElement('a');
                 a.href = data.url;
                 a.download = 'BU_Assistant.apk';
@@ -201,27 +177,19 @@
                 a.click();
                 document.body.removeChild(a);
 
-                document.getElementById('successNote').style.display = 'block';
+                // Show success
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('successState').style.display = 'block';
             } catch (e) {
-                errEl.textContent = 'Network error. Please try again.';
-                btn.disabled = false;
-                btn.textContent = '⬇ Get My Download';
+                console.error('Download error:', e);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.getElementById('errMsg').textContent = 'Download failed. Try again.';
             }
         }
 
-        // Auto-download if email in URL params (from LemonSqueezy redirect)
-        window.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const email = params.get('email');
-            if (email) {
-                document.getElementById('emailInput').value = email;
-                getDownload(email);
-            }
-        });
-
-        document.getElementById('emailInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') getDownload();
-        });
+        // Auto-download on page load
+        window.addEventListener('DOMContentLoaded', startDownload);
     </script>
 </body>
 </html>
