@@ -217,8 +217,14 @@
                             ⚠️ <strong>Enter email carefully</strong> - This will be used to verify your payment.<br>
                             Make sure it matches the email used during checkout.
                         </div>
+                    </div>
+
+                    <!-- Enrollment ID input -->
+                    <div class="form-group">
+                        <label for="enrollment">Enrollment ID *</label>
+                        <input type="text" id="enrollment" name="enrollment" placeholder="Your BU enrollment ID" required>
                         <div class="privacy-note">
-                            🔒 <strong>Your privacy matters:</strong> We only use this email to verify your purchase. Your data won't be stored permanently.
+                            🔒 <strong>Device-locked access:</strong> Your enrollment ID locks this download to this device. Other devices cannot use the same enrollment.
                         </div>
                     </div>
 
@@ -253,7 +259,11 @@
             </div>
 
             <div class="security-note" style="margin-top:20px;">
-                <strong>📱 Android install steps:</strong><br><br>
+                <strong>� Security Features:</strong><br><br>
+                ✓ <strong>Device-locked:</strong> This download is locked to this specific device using your enrollment ID.<br>
+                ✓ <strong>Email verified:</strong> Only emails with valid payments can download.<br>
+                ✓ <strong>One-time tokens:</strong> Download links expire after 1 hour.<br><br>
+                <strong>�📱 Android install steps:</strong><br><br>
                 Open <strong>Files / My Files</strong> → <strong>Downloads</strong> → tap <strong>BU_Assistant.apk</strong> → tap <strong>Install</strong>.<br><br>
                 If asked about "unknown sources": <strong>Settings → Apps → (your browser) → Install Unknown Apps → Allow</strong>.
             </div>
@@ -261,16 +271,20 @@
     </div>
 
     <script>
-        const BACKEND = 'https://buic-backend-v2.vercel.app';
+        const BACKEND = 'https://unsharable-radiophonic-nicolle.ngrok-free.dev';
 
-        // ── Generate unique device ID ──────────────────────────────────
-        function getDeviceId() {
-            let deviceId = localStorage.getItem('buic_device_id');
-            if (!deviceId) {
-                deviceId = 'dev_' + Math.random().toString(36).substr(2, 16) + '_' + Date.now();
-                localStorage.setItem('buic_device_id', deviceId);
+        // Generate or retrieve persistent device hash
+        function getDeviceHash() {
+            let hash = localStorage.getItem('device_hash');
+            if (!hash) {
+                // Generate unique device ID (persistent across sessions)
+                hash = 'device_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+                localStorage.setItem('device_hash', hash);
+                console.log('🔐 New device hash generated:', hash.substring(0, 20) + '...');
+            } else {
+                console.log('🔐 Using existing device hash:', hash.substring(0, 20) + '...');
             }
-            return deviceId;
+            return hash;
         }
 
         function showForm() {
@@ -304,6 +318,7 @@
 
         function resetForm() {
             document.getElementById('email').value = '';
+            document.getElementById('enrollment').value = '';
             document.getElementById('student').checked = true;
             showForm();
         }
@@ -321,40 +336,32 @@
             event.preventDefault();
             
             const email = document.getElementById('email').value.trim().toLowerCase();
-            const userType = document.querySelector('input[name="userType"]:checked').value;
-            const deviceId = getDeviceId();
+            const enrollment = document.getElementById('enrollment').value.trim();
+            const role = document.querySelector('input[name="userType"]:checked').value;
+            const deviceHash = getDeviceHash();
 
             if (!email || !email.includes('@')) {
                 showError('Please enter a valid email address.');
                 return;
             }
 
+            if (!enrollment) {
+                showError('Please enter your enrollment ID.');
+                return;
+            }
+
             showLoading();
 
             try {
-                // FIRST: Store email + device_id to paid_orders (get download hash)
-                const trackResp = await fetch(`${BACKEND}/api/track-download`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email, 
-                        role: userType,
-                        device_id: deviceId 
-                    }),
-                });
-                
-                if (!trackResp.ok) {
-                    throw new Error('Failed to register device');
-                }
-                console.log('✓ Device registered and email stored');
-
-                // THEN: Verify device hash and get download URL
+                // Triple-lock verification: email + enrollment + role + device
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         email,
-                        device_id: deviceId 
+                        enrollment,
+                        deviceHash,
+                        role
                     }),
                 });
 
@@ -367,14 +374,15 @@
                 gtag('event', 'apk_download', { 
                     event_category: 'conversion',
                     email: email,
-                    user_type: userType
+                    role: role
                 });
+                console.log('✅ Download authorized - Triple lock verified:', data.security);
                 
                 triggerDownload(data.url);
                 showSuccess();
             } catch (e) {
                 console.error('Download error:', e);
-                showError(`❌ ${e.message} Please make sure you used the correct email from your payment.`);
+                showError(`❌ ${e.message}`);
             }
         }
 

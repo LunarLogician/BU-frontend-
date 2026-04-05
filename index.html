@@ -810,9 +810,8 @@
       <div class="modal-sub">One-time purchase · ₨280 · Yours forever</div>
       <div class="modal-tag" id="mTag"></div>
       <div class="modal-field"><label>Your email</label><input type="email" id="emailIn" placeholder="student@bahria.edu.pk" autocomplete="email"></div>
-      <div class="modal-info"><p>You’ll be redirected to our secure payment page. The APK download link is sent to your email instantly after payment.</p></div>      <div style="background:#FFF3CD;border-left:4px solid #FFC107;padding:12px;border-radius:8px;font-size:12px;color:#856404;margin-bottom:16px;line-height:1.5">
-        <strong>⚠️ IMPORTANT:</strong> Enter your email carefully above. This exact email must be used to verify and download the APK after payment.
-      </div>      <button class="btn-pay" id="btnPay">Proceed to Payment →</button>
+      <div class="modal-info"><p>You’ll be redirected to our secure payment page. The APK download link is sent to your email instantly after payment.</p></div>
+      <button class="btn-pay" id="btnPay">Proceed to Payment →</button>
       <div class="modal-trust"><span>🔒 Secure</span><span>⚡ Instant APK</span><span>📱 Android only</span></div>
       <button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:10px;display:block;width:100%;text-align:center" id="btnBack">← Back</button>
     </div>
@@ -844,9 +843,7 @@
   });
 
   const modal = document.getElementById('modal');
-  const CHECKOUT_UUID = 'a8dca598-9364-4ee1-85fc-7c90c9e95633';
-  const CHECKOUT_BASE = 'https://devpostai.lemonsqueezy.com/checkout/buy';
-  const VERIFY_PAGE = 'https://bu-frontend-three.vercel.app/verify-payment.html';
+const CHECKOUT_URL = 'https://devpostai.lemonsqueezy.com/checkout/buy/a8dca598-9364-4ee1-85fc-7c90c9e95633';
 
   let selectedRole = 'student';
 
@@ -855,18 +852,21 @@
   }
 
   function trackAndRedirect(email, role) {
-    // Store email locally so verify page can use it
-    sessionStorage.setItem('pending_email', email);
-    
-    fetch('https://buic-backend-v2.vercel.app/api/track-download', {
+    console.log('🛒 CHECKOUT INITIATED:', { email, role, timestamp: new Date().toISOString() });
+    fetch('https://unsharable-radiophonic-nicolle.ngrok-free.dev/api/track-download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, role, ts: Date.now() })
-    }).catch(() => {});
-    
+    })
+    .then(res => {
+      console.log('✅ Checkout tracked on backend');
+      console.log('🔗 Redirecting to Lemonsqueezy:', CHECKOUT_URL);
+    })
+    .catch(err => {
+      console.error('❌ Failed to track checkout:', err);
+    });
     showToast('Redirecting to secure checkout...');
-    const checkoutUrl = `${CHECKOUT_BASE}/${CHECKOUT_UUID}?checkout[email]=${encodeURIComponent(email)}&checkout[custom][verify_url]=${encodeURIComponent(VERIFY_PAGE)}`;
-    setTimeout(() => { window.location.href = checkoutUrl; }, 600);
+    setTimeout(() => { window.location.href = CHECKOUT_URL + '?checkout[email]=' + encodeURIComponent(email); }, 600);
   }
 
   document.querySelectorAll('.btn-buy').forEach(b => {
