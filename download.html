@@ -354,16 +354,22 @@
             showLoading();
 
             try {
-                // Triple-lock verification: email + enrollment + role + device
+                // Triple-lock verification: email + enrollment (for students) + role + device
+                const requestBody = { 
+                    email,
+                    deviceHash,
+                    role
+                };
+                
+                // Add enrollment only for students
+                if (role === 'student') {
+                    requestBody.enrollment = enrollment;
+                }
+                
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email,
-                        enrollment,
-                        deviceHash,
-                        role
-                    }),
+                    body: JSON.stringify(requestBody),
                 });
 
                 if (!resp.ok) {
