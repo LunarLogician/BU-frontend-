@@ -113,28 +113,142 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #0E5CAD;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #0E5CAD;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #1B76D0;
+            box-shadow: 0 0 0 3px rgba(14, 92, 173, 0.1);
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .radio-option {
+            flex: 1;
+        }
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+        .radio-label {
+            display: block;
+            padding: 12px;
+            border: 2px solid #DDD;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #5B6B7E;
+            transition: all 0.3s;
+        }
+        .radio-option input[type="radio"]:checked + .radio-label {
+            border-color: #0E5CAD;
+            background: #F4F7FB;
+            color: #0E5CAD;
+        }
+        .warning-note {
+            background: #FFF3CD;
+            border-left: 4px solid #FFC107;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #856404;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+        .privacy-note {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #2E7D32;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
     <div class="download-section">
         <div class="download-card">
-            <div id="loadingState">
-                <div class="spinner"></div>
-                <h1>Preparing Your Download...</h1>
-                <p>We're getting your APK ready. This should take just a few seconds.</p>
+            <!-- FORM STATE: Collect email -->
+            <div id="formState">
+                <h1 style="color:#0E5CAD;margin-bottom:24px;">Get Your APK</h1>
+                
+                <form onsubmit="handleSubmit(event)">
+                    <!-- Who are you? -->
+                    <div class="form-group" style="text-align: center;">
+                        <label style="text-align: left; display: block; margin-bottom: 12px;">Who are you?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="student" name="userType" value="student" checked>
+                                <label for="student" class="radio-label">👨‍🎓 Student</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="other" name="userType" value="other">
+                                <label for="other" class="radio-label">👤 Other</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email input -->
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                        <div class="warning-note">
+                            ⚠️ <strong>Enter email carefully</strong> - This will be used to verify your payment.<br>
+                            Make sure it matches the email used during checkout.
+                        </div>
+                        <div class="privacy-note">
+                            🔒 <strong>Your privacy matters:</strong> We only use this email to verify your purchase. Your data won't be stored permanently.
+                        </div>
+                    </div>
+
+                    <!-- Submit button -->
+                    <button type="submit" class="download-btn" style="margin-top: 24px;">
+                        ✓ Verify & Download
+                    </button>
+                </form>
             </div>
 
+            <!-- LOADING STATE: Verifying payment -->
+            <div id="loadingState" style="display:none;">
+                <div class="spinner"></div>
+                <h1>Verifying Your Purchase...</h1>
+                <p>Please wait while we confirm your payment.</p>
+            </div>
+
+            <!-- SUCCESS STATE: Download started -->
             <div id="successState" style="display:none;">
                 <div class="check-icon">✓</div>
                 <h1>Download Started!</h1>
                 <p>Your BU Assistant APK is downloading. If it didn't start, check your Downloads folder.</p>
             </div>
 
+            <!-- ERROR STATE: Payment not found -->
             <div id="errorState" style="display:none;">
                 <h1 style="color:#C0392B;">Download Failed</h1>
                 <p id="errMsg" style="color:#C0392B;margin:16px 0;"></p>
-                <button class="download-btn email-btn" onclick="location.reload()" style="border-color:#0E5CAD;color:#0E5CAD;">
-                    ↻ Retry
+                <button class="download-btn email-btn" onclick="resetForm()" style="border-color:#0E5CAD;color:#0E5CAD;margin-top:12px;">
+                    ↻ Try Again
                 </button>
             </div>
 
@@ -149,27 +263,39 @@
     <script>
         const BACKEND = 'https://buic-backend-v2.vercel.app';
 
-        async function startDownload() {
-            try {
-                // Get signed URL from backend (no email needed - LemonSqueezy already verified payment)
-                const resp = await fetch(`${BACKEND}/api/get-download-url`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}),
-                });
+        function showForm() {
+            document.getElementById('formState').style.display = 'block';
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('successState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+        }
 
-                if (!resp.ok) {
-                    throw new Error('Failed to get download URL');
-                }
+        function showLoading() {
+            document.getElementById('formState').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('successState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+        }
 
-                const data = await resp.json();
-                gtag('event', 'apk_download', { event_category: 'conversion' });
-                triggerDownload(data.url);
-                showSuccess();
-            } catch (e) {
-                console.error('Download error:', e);
-                showError('Download failed. Please refresh and try again.');
-            }
+        function showSuccess() {
+            document.getElementById('formState').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('successState').style.display = 'block';
+            document.getElementById('errorState').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('formState').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('successState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('errMsg').textContent = message;
+        }
+
+        function resetForm() {
+            document.getElementById('email').value = '';
+            document.getElementById('student').checked = true;
+            showForm();
         }
 
         function triggerDownload(url) {
@@ -181,19 +307,49 @@
             document.body.removeChild(a);
         }
 
-        function showSuccess() {
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('successState').style.display = 'block';
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const userType = document.querySelector('input[name="userType"]:checked').value;
+
+            if (!email || !email.includes('@')) {
+                showError('Please enter a valid email address.');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Call backend to verify email in paid_orders collection
+                const resp = await fetch(`${BACKEND}/api/get-download-url`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+
+                if (!resp.ok) {
+                    const data = await resp.json();
+                    throw new Error(data.error || 'Verification failed');
+                }
+
+                const data = await resp.json();
+                gtag('event', 'apk_download', { 
+                    event_category: 'conversion',
+                    email: email,
+                    user_type: userType
+                });
+                
+                triggerDownload(data.url);
+                showSuccess();
+            } catch (e) {
+                console.error('Download error:', e);
+                showError(`❌ ${e.message} Please make sure you used the correct email from your payment.`);
+            }
         }
 
-        function showError(message) {
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('errorState').style.display = 'block';
-            document.getElementById('errMsg').textContent = message;
-        }
-
-        // Auto-download on page load
-        window.addEventListener('DOMContentLoaded', startDownload);
+        // Show form on page load
+        window.addEventListener('DOMContentLoaded', showForm);
     </script>
 </body>
 </html>
