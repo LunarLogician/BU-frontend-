@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BU Buddy Admin Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --cyan: #3dcbfb;
+    --blue: #2184d7;
+    --indigo: #2d27a0;
+    --purple: #7c208f;
+    --magenta: #c82278;
+    --orange: #ff870f;
+    --logo-gradient: linear-gradient(135deg, #3dcbfb 0%, #2184d7 20%, #1f3c7e 45%, #7c208f 70%, #c82278 85%, #ff870f 100%);
+    --bg: #ffffff;
+    --surface: #f8fafb;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1f35;
+    --muted: #5a6473;
+  }
+  
+  body {
+    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  
+  header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  
+  .logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    background: var(--logo-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: pulse 2s infinite;
+  }
+  
+  .status-indicator.connected {
+    background: #22c55e;
+    animation: none;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .status-text {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  
+  .section {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  
+  .config-group {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  input, textarea, select {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s;
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(61, 203, 251, 0.1);
+  }
+  
+  .btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  
+  .btn-primary {
+    background: var(--logo-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(200, 34, 120, 0.25);
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(200, 34, 120, 0.35);
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  
+  .btn-secondary:hover {
+    background: var(--surface);
+    border-color: var(--cyan);
+  }
+  
+  .btn-danger {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .btn-danger:hover {
+    background: #dc2626;
+  }
+  
+  .btn-success {
+    background: #22c55e;
+    color: white;
+  }
+  
+  .btn-success:hover {
+    background: #16a34a;
+  }
+  
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  @media (max-width: 600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  
+  .actions-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    animation: slideDown 0.3s ease;
+  }
+  
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .message.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #15803d;
+  }
+  
+  .message.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+  }
+  
+  .message.info {
+    background: rgba(61, 203, 251, 0.1);
+    border: 1px solid rgba(61, 203, 251, 0.3);
+    color: #0369a1;
+  }
+  
+  .result-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+    color: var(--muted);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  
+  .table th {
+    background: var(--surface);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .table tr:hover {
+    background: rgba(61, 203, 251, 0.02);
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  .badge.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
+  }
+  
+  .badge.expired {
+    background: rgba(239, 68, 68, 0.1);
+    color: #991b1b;
+  }
+  
+  .badge.pending {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+  }
+  
+  .loading {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(61, 203, 251, 0.2);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  
+  .tab-btn {
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  
+  .tab-btn.active {
+    border-bottom-color: var(--cyan);
+    color: var(--cyan);
+  }
+  
+  .tab-content {
+    display: none;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="." class="logo">
+      <span class="logo-text">BU Buddy Admin</span>
+    </a>
+    <div class="header-actions">
+      <span class="status-indicator" id="statusIndicator"></span>
+      <span class="status-text" id="statusText">Disconnected</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="messageBox"></div>
+  
+  <!-- Configuration Section -->
+  <div class="section">
+    <h2>⚙️ Configuration</h2>
+    <div class="config-group">
+      <div class="form-group">
+        <label for="backendUrl">Backend URL</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="backendUrl" placeholder="http://localhost:3000 or production URL" style="flex: 1;">
+          <button class="btn btn-secondary" onclick="testconnection()">Test Connection</button>
+        </div>
+        <small style="color: var(--muted); margin-top: 4px;">Local: http://localhost:3000 | Production: Check your deployment URL</small>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tabs Navigation -->
+  <div class="section">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('premium')">Premium Management</button>
+      <button class="tab-btn" onclick="switchTab('users')">User Management</button>
+      <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+    </div>
+    
+    <!-- Premium Management Tab -->
+    <div id="premium" class="tab-content active">
+      <h2>Premium Management</h2>
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">Set User Premium</h3>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="setPremiumRollNo">Roll Number</label>
+            <input type="text" id="setPremiumRollNo" placeholder="e.g., CS-001">
+          </div>
+          <div class="form-group">
+            <label for="setPremiumDays">Days</label>
+            <input type="number" id="setPremiumDays" placeholder="e.g., 30" value="30">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="setPremiumSecret">Admin Secret</label>
+          <input type="password" id="setPremiumSecret" placeholder="Enter admin secret">
+        </div>
+        <button class="btn btn-primary" onclick="setPremium()" style="margin-top: 12px; width: 100%;">Set Premium</button>
+        <div id="setPremiumResult"></div>
+      </div>
+      
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">Revoke Premium</h3>
+        <div class="form-group">
+          <label for="revokePremiumRollNo">Roll Number</label>
+          <input type="text" id="revokePremiumRollNo" placeholder="e.g., CS-001">
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="revokePremiumSecret">Admin Secret</label>
+          <input type="password" id="revokePremiumSecret" placeholder="Enter admin secret">
+        </div>
+        <button class="btn btn-danger" onclick="revokePremium()" style="margin-top: 12px; width: 100%;">Revoke Premium</button>
+        <div id="revokePremiumResult"></div>
+      </div>
+      
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">Extend Premium Expiry</h3>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="extendRollNo">Roll Number</label>
+            <input type="text" id="extendRollNo" placeholder="e.g., CS-001">
+          </div>
+          <div class="form-group">
+            <label for="extendDays">Additional Days</label>
+            <input type="number" id="extendDays" placeholder="e.g., 7" value="7">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="extendSecret">Admin Secret</label>
+          <input type="password" id="extendSecret" placeholder="Enter admin secret">
+        </div>
+        <button class="btn btn-primary" onclick="extendPremium()" style="margin-top: 12px; width: 100%;">Extend Premium</button>
+        <div id="extendPremiumResult"></div>
+      </div>
+      
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+      
+      <div>
+        <h3 style="font-size: 14px; margin-bottom: 12px;">Check Premium Status</h3>
+        <div class="form-group">
+          <label for="checkRollNo">Roll Number</label>
+          <input type="text" id="checkRollNo" placeholder="e.g., CS-001">
+        </div>
+        <button class="btn btn-secondary" onclick="checkPremium()" style="margin-top: 12px; width: 100%;">Check Status</button>
+        <div id="checkPremiumResult"></div>
+      </div>
+    </div>
+    
+    <!-- User Management Tab -->
+    <div id="users" class="tab-content">
+      <h2>User Management</h2>
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">List All Users</h3>
+        <button class="btn btn-primary" onclick="listUsers()" style="width: 100%;">Load Users</button>
+        <div id="usersResult"></div>
+      </div>
+    </div>
+    
+    <!-- Analytics Tab -->
+    <div id="analytics" class="tab-content">
+      <h2>Analytics & Statistics</h2>
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">System Statistics</h3>
+        <div id="analyticsResult">
+          <p style="color: var(--muted);">Load analytics data to see statistics here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+  // Load backend URL from localStorage
+  function loadBackendUrl() {
+    const stored = localStorage.getItem('bubuddy-backend-url');
+    if (stored) {
+      document.getElementById('backendUrl').value = stored;
+    }
+  }
+  
+  // Save backend URL
+  function saveBackendUrl() {
+    const url = document.getElementById('backendUrl').value.trim();
+    if (!url) {
+      showMessage('Please enter a backend URL', 'error');
+      return;
+    }
+    localStorage.setItem('bubuddy-backend-url', url);
+    showMessage('Backend URL saved', 'success');
+  }
+  
+  // Get backend URL
+  function getBackendUrl() {
+    return document.getElementById('backendUrl').value.trim();
+  }
+  
+  // Test connection
+  async function testConnection() {
+    const url = getBackendUrl();
+    if (!url) {
+      showMessage('Please enter a backend URL', 'error');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${url}/api/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok || response.status === 404) {
+        updateStatus(true);
+        showMessage('✅ Connected to backend successfully', 'success');
+        saveBackendUrl();
+      } else {
+        updateStatus(false);
+        showMessage('❌ Backend returned error: ' + response.status, 'error');
+      }
+    } catch (error) {
+      updateStatus(false);
+      showMessage('❌ Connection failed: ' + error.message, 'error');
+    }
+  }
+  
+  // Update connection status
+  function updateStatus(connected) {
+    const indicator = document.getElementById('statusIndicator');
+    const text = document.getElementById('statusText');
+    if (connected) {
+      indicator.classList.add('connected');
+      text.textContent = 'Connected';
+    } else {
+      indicator.classList.remove('connected');
+      text.textContent = 'Disconnected';
+    }
+  }
+  
+  // Show messages
+  function showMessage(message, type = 'info') {
+    const box = document.getElementById('messageBox');
+    const msg = document.createElement('div');
+    msg.className = `message ${type}`;
+    msg.textContent = message;
+    box.appendChild(msg);
+    
+    setTimeout(() => msg.remove(), 5000);
+  }
+  
+  // Show result
+  function showResult(elementId, data) {
+    const result = document.getElementById(elementId);
+    result.innerHTML = '<div class="result-box">' + JSON.stringify(data, null, 2) + '</div>';
+  }
+  
+  // API Call wrapper
+  async function apiCall(endpoint, method = 'POST', data = null, secret = null) {
+    const url = getBackendUrl();
+    if (!url) {
+      showMessage('Please configure backend URL first', 'error');
+      return null;
+    }
+    
+    const options = {
+      method: method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    
+    if (secret) {
+      options.headers['X-Admin-Secret'] = secret;
+    }
+    
+    if (data) {
+      options.body = JSON.stringify(data);
+    }
+    
+    try {
+      const response = await fetch(`${url}${endpoint}`, options);
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      showMessage('API Error: ' + error.message, 'error');
+      return null;
+    }
+  }
+  
+  // Set Premium
+  async function setPremium() {
+    const rollNo = document.getElementById('setPremiumRollNo').value.trim();
+    const days = parseInt(document.getElementById('setPremiumDays').value);
+    const secret = document.getElementById('setPremiumSecret').value;
+    
+    if (!rollNo || !days || !secret) {
+      showMessage('Please fill in all fields', 'error');
+      return;
+    }
+    
+    const result = await apiCall('/api/admin/set-premium', 'POST', 
+      { rollNo, days }, secret);
+    
+    if (result) {
+      showResult('setPremiumResult', result);
+      if (result.success) {
+        showMessage('✅ Premium set successfully', 'success');
+      } else {
+        showMessage('❌ ' + (result.message || 'Error setting premium'), 'error');
+      }
+    }
+  }
+  
+  // Revoke Premium
+  async function revokePremium() {
+    const rollNo = document.getElementById('revokePremiumRollNo').value.trim();
+    const secret = document.getElementById('revokePremiumSecret').value;
+    
+    if (!rollNo || !secret) {
+      showMessage('Please fill in all fields', 'error');
+      return;
+    }
+    
+    const result = await apiCall('/api/admin/revoke-premium', 'POST', 
+      { rollNo }, secret);
+    
+    if (result) {
+      showResult('revokePremiumResult', result);
+      if (result.success) {
+        showMessage('✅ Premium revoked successfully', 'success');
+      } else {
+        showMessage('❌ ' + (result.message || 'Error revoking premium'), 'error');
+      }
+    }
+  }
+  
+  // Extend Premium
+  async function extendPremium() {
+    const rollNo = document.getElementById('extendRollNo').value.trim();
+    const days = parseInt(document.getElementById('extendDays').value);
+    const secret = document.getElementById('extendSecret').value;
+    
+    if (!rollNo || !days || !secret) {
+      showMessage('Please fill in all fields', 'error');
+      return;
+    }
+    
+    const result = await apiCall('/api/admin/extend-expiry', 'POST', 
+      { rollNo, days }, secret);
+    
+    if (result) {
+      showResult('extendPremiumResult', result);
+      if (result.success) {
+        showMessage('✅ Premium extended successfully', 'success');
+      } else {
+        showMessage('❌ ' + (result.message || 'Error extending premium'), 'error');
+      }
+    }
+  }
+  
+  // Check Premium
+  async function checkPremium() {
+    const rollNo = document.getElementById('checkRollNo').value.trim();
+    
+    if (!rollNo) {
+      showMessage('Please enter a roll number', 'error');
+      return;
+    }
+    
+    const result = await apiCall(`/api/admin/check-premium?rollNo=${rollNo}`, 'GET');
+    
+    if (result) {
+      showResult('checkPremiumResult', result);
+    }
+  }
+  
+  // List Users
+  async function listUsers() {
+    const result = await apiCall('/api/admin/list-users', 'GET');
+    
+    if (result && result.users) {
+      let html = '<table class="table"><thead><tr><th>Roll No</th><th>Email</th><th>Premium</th><th>Expiry</th><th>Device Locks</th></tr></thead><tbody>';
+      
+      result.users.forEach(user => {
+        const isPremium = user.premium_expiry > Date.now();
+        const badge = isPremium ? '<span class="badge active">ACTIVE</span>' : '<span class="badge expired">EXPIRED</span>';
+        const expiry = user.premium_expiry ? new Date(user.premium_expiry).toLocaleDateString() : 'N/A';
+        const deviceLocks = user.device_locks ? user.device_locks.length : 0;
+        
+        html += `<tr><td>${user.rollNo}</td><td>${user.email}</td><td>${badge}</td><td>${expiry}</td><td>${deviceLocks}</td></tr>`;
+      });
+      
+      html += '</tbody></table>';
+      document.getElementById('usersResult').innerHTML = html;
+      showMessage(`✅ Loaded ${result.users.length} users`, 'success');
+    }
+  }
+  
+  // Switch tabs
+  function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    
+    // Remove active from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active to clicked button
+    event.target.classList.add('active');
+  }
+  
+  // Initialize
+  window.addEventListener('load', () => {
+    loadBackendUrl();
+  });
+</script>
+
+</body>
+</html>
