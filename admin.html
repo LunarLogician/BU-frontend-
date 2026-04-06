@@ -504,6 +504,14 @@
         <button class="btn btn-primary" onclick="listUsers()" style="width: 100%;">Load Users</button>
         <div id="usersResult"></div>
       </div>
+      
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+      
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 14px; margin-bottom: 12px;">Device Locks</h3>
+        <button class="btn btn-secondary" onclick="loadDeviceLocks()" style="width: 100%;">Load Device Locks</button>
+        <div id="deviceLocksResult"></div>
+      </div>
     </div>
     
     <!-- Analytics Tab -->
@@ -786,6 +794,51 @@
     showMessage(`✅ Analytics loaded: ${total} orders from ${uniqueEmails} users, Revenue: PKR ${totalRevenue.toLocaleString()}`, 'success');
   }
   
+  // Load Device Locks
+  async function loadDeviceLocks() {
+    const result = await apiCall('/api/admin/device-locks', 'GET');
+    
+    if (!result || !Array.isArray(result)) {
+      showMessage('No device lock data available', 'info');
+      return;
+    }
+    
+    let html = `<table class="table" style="margin-top: 12px;">
+      <thead>
+        <tr>
+          <th>Email / Enrollment</th>
+          <th>Device ID</th>
+          <th>Device Hash</th>
+          <th>Device Name</th>
+          <th>Last Download</th>
+          <th>Download Count</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    
+    result.forEach(device => {
+      const deviceId = device.device_id || 'N/A';
+      const deviceHash = device.deviceHash ? device.deviceHash.substring(0, 16) + '...' : 'N/A';
+      const deviceName = device.deviceName || 'Unknown';
+      const lastDownload = device.lastDownload ? new Date(device.lastDownload).toLocaleDateString() : 'N/A';
+      const downloadCount = device.downloadCount || 0;
+      const email = device.email || device.enrollment || 'N/A';
+      
+      html += `<tr>
+        <td style="font-size: 12px;">${email}</td>
+        <td style="font-size: 11px; font-family: monospace;">${deviceId}</td>
+        <td style="font-size: 10px; font-family: monospace;" title="${device.deviceHash || ''}">${deviceHash}</td>
+        <td>${deviceName}</td>
+        <td>${lastDownload}</td>
+        <td style="text-align: center;"><strong>${downloadCount}</strong></td>
+      </tr>`;
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('deviceLocksResult').innerHTML = html;
+    showMessage(`✅ Loaded ${result.length} device locks`, 'success');
+  }
+  
   // List Users
   async function listUsers() {
     const result = await apiCall('/api/admin/payments', 'GET');
@@ -797,7 +850,7 @@
             <th>Email</th>
             <th>Product</th>
             <th>Amount</th>
-            <th>Currency</th>
+            <th>Order ID</th>
             <th>Status</th>
             <th>Paid Date</th>
           </tr>
@@ -805,19 +858,29 @@
         <tbody>`;
       
       result.forEach(payment => {
-        const date = payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : 'N/A';
+        // Parse date properly from milliseconds or ISO string
+        let date = 'N/A';
+        if (payment.paid_at) {
+          try {
+            const d = typeof payment.paid_at === 'number' 
+              ? new Date(payment.paid_at) 
+              : new Date(payment.paid_at);
+            if (!isNaN(d)) date = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          } catch(e) { date = payment.paid_at; }
+        }
+        
         const statusBadge = '<span class="badge active">✓ PAID</span>';
         const product = payment.product || 'N/A';
         const amount = payment.amount || 'N/A';
-        const currency = payment.currency || 'PKR';
+        const orderId = payment.order_id || payment.id || 'N/A';
         
         html += `<tr>
           <td>${payment.email || 'N/A'}</td>
           <td>${product}</td>
           <td>${amount}</td>
-          <td>${currency}</td>
+          <td style="font-family: monospace; font-size: 11px;">${orderId}</td>
           <td>${statusBadge}</td>
-          <td>${date}</td>
+          <td style="font-size: 12px;">${date}</td>
         </tr>`;
       });
       
