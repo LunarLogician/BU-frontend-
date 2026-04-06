@@ -361,6 +361,27 @@
   .tab-content.active {
     display: block;
   }
+  
+  .stat-card {
+    background: var(--surface);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 </style>
 </head>
 <body>
@@ -490,9 +511,31 @@
       <h2>Analytics & Statistics</h2>
       
       <div style="margin-bottom: 24px;">
-        <h3 style="font-size: 14px; margin-bottom: 12px;">System Statistics</h3>
-        <div id="analyticsResult">
-          <p style="color: var(--muted);">Load analytics data to see statistics here.</p>
+        <h3 style="font-size: 14px; margin-bottom: 12px;">System Overview</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
+          <div style="background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 24px; font-weight: 800; color: var(--cyan);" id="statsTotal">0</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Total Users</div>
+          </div>
+          <div style="background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 24px; font-weight: 800; color: var(--blue);" id="statsEnrolled">0</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Enrolled</div>
+          </div>
+          <div style="background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 24px; font-weight: 800; color: var(--orange);" id="statsPending">0</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Pending</div>
+          </div>
+          <div style="background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 24px; font-weight: 800; color: var(--magenta);" id="statsRevenue">PKR 0</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Revenue</div>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="loadAnalytics()" style="width: 100%; margin-bottom: 20px;">Load Analytics</button>
+        
+        <h3 style="font-size: 14px; margin-bottom: 12px; margin-top: 24px;">Enrollment Status Breakdown</h3>
+        <div id="analyticsResult" style="background: var(--surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border); max-height: 400px; overflow-y: auto;">
+          <p style="color: var(--muted);">Click "Load Analytics" to see enrollment data...</p>
         </div>
       </div>
     </div>
@@ -699,28 +742,96 @@
     }
   }
   
+  // Load Analytics
+  async function loadAnalytics() {
+    const result = await apiCall('/api/admin/payments', 'GET');
+    
+    if (!result) return;
+    
+    const payments = Array.isArray(result) ? result : (result.payments || []);
+    
+    // Calculate statistics
+    const total = payments.length;
+    const enrolled = payments.filter(p => p.status === 'Submitted' || p.submitted).length;
+    const pending = payments.filter(p => p.status !== 'Submitted' && !p.submitted).length;
+    const revenue = payments.reduce((sum, p) => sum + (parseInt(p.markText) || 0), 0);
+    
+    // Update stat boxes
+    document.getElementById('statsTotal').textContent = total;
+    document.getElementById('statsEnrolled').textContent = enrolled;
+    document.getElementById('statsPending').textContent = pending;
+    document.getElementById('statsRevenue').textContent = `PKR ${revenue}`;
+    
+    // Create enrollment breakdown table
+    let html = '<table class="table" style="margin-top: 12px;"><thead><tr><th>Email</th><th>Enrollment ID</th><th>Course</th><th>Status</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
+    
+    payments.forEach(p => {
+      const enrollId = p.id || 'N/A';
+      const course = p.course || p.title || 'N/A';
+      const statusBadge = (p.status === 'Submitted' || p.submitted) 
+        ? '<span class="badge active">✓ ENROLLED</span>' 
+        : '<span class="badge pending">⏱ PENDING</span>';
+      const date = p.dueDate ? new Date(p.dueDate).toLocaleDateString() : 'N/A';
+      const amount = p.markText || 'N/A';
+      
+      html += `<tr>
+        <td style="font-size: 12px;">${p.email || 'N/A'}</td>
+        <td style="font-size: 12px;">${enrollId}</td>
+        <td style="font-size: 12px;">${course}</td>
+        <td>${statusBadge}</td>
+        <td>${amount}</td>
+        <td>${date}</td>
+      </tr>`;
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('analyticsResult').innerHTML = html;
+    showMessage(`✅ Analytics loaded: ${total} total, ${enrolled} enrolled, ${pending} pending`, 'success');
+  }
+  
   // List Users
   async function listUsers() {
     const result = await apiCall('/api/admin/payments', 'GET');
     
     if (result && (result.payments || result)) {
       const payments = result.payments || result;
-      let html = '<table class="table"><thead><tr><th>Email</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+      let html = `<table class="table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Enrollment ID</th>
+            <th>Status</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>`;
       
       if (Array.isArray(payments)) {
         payments.forEach(payment => {
           const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
-          const status = payment.status || 'N/A';
+          const status = payment.status || 'Submitted';
+          const statusBadge = status === 'Submitted' 
+            ? '<span class="badge active">ACTIVE</span>' 
+            : '<span class="badge pending">PENDING</span>';
+          const enrollmentId = payment.id || payment.enrollmentId || 'N/A';
+          const amount = payment.amount ? `${payment.amount} PKR` : payment.markText || 'N/A';
           
-          html += `<tr><td>${payment.email || 'N/A'}</td><td>${payment.amount || 'N/A'}</td><td>${status}</td><td>${date}</td></tr>`;
+          html += `<tr>
+            <td>${payment.email || 'N/A'}</td>
+            <td>${enrollmentId}</td>
+            <td>${statusBadge}</td>
+            <td>${amount}</td>
+            <td>${date}</td>
+          </tr>`;
         });
       }
       
       html += '</tbody></table>';
       document.getElementById('usersResult').innerHTML = html;
-      showMessage(`✅ Loaded payment data`, 'success');
+      showMessage(`✅ Loaded ${Array.isArray(payments) ? payments.length : 1} user records`, 'success');
     } else {
-      showMessage('No payment data available', 'info');
+      showMessage('No user data available', 'info');
     }
   }
   
