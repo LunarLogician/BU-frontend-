@@ -510,6 +510,9 @@
     const stored = localStorage.getItem('bubuddy-backend-url');
     if (stored) {
       document.getElementById('backendUrl').value = stored;
+    } else {
+      // Set default backend URL
+      document.getElementById('backendUrl').value = 'https://buic-backend-v2.vercel.app';
     }
   }
   
