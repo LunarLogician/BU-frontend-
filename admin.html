@@ -468,12 +468,8 @@
       <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
       
       <div>
-        <h3 style="font-size: 14px; margin-bottom: 12px;">Check Premium Status</h3>
-        <div class="form-group">
-          <label for="checkRollNo">Roll Number</label>
-          <input type="text" id="checkRollNo" placeholder="e.g., CS-001">
-        </div>
-        <button class="btn btn-secondary" onclick="checkPremium()" style="margin-top: 12px; width: 100%;">Check Status</button>
+        <h3 style="font-size: 14px; margin-bottom: 12px;">View All Payments</h3>
+        <button class="btn btn-secondary" onclick="checkPremium()" style="margin-top: 12px; width: 100%;">View Payments</button>
         <div id="checkPremiumResult"></div>
       </div>
     </div>
@@ -632,7 +628,7 @@
       return;
     }
     
-    const result = await apiCall('/api/admin/set-premium', 'POST', 
+    const result = await apiCall('/api/set-paid', 'POST', 
       { rollNo, days }, secret);
     
     if (result) {
@@ -655,7 +651,7 @@
       return;
     }
     
-    const result = await apiCall('/api/admin/revoke-premium', 'POST', 
+    const result = await apiCall('/api/revoke-paid', 'POST', 
       { rollNo }, secret);
     
     if (result) {
@@ -679,7 +675,8 @@
       return;
     }
     
-    const result = await apiCall('/api/admin/extend-expiry', 'POST', 
+    // Use set-paid with extension logic
+    const result = await apiCall('/api/set-paid', 'POST', 
       { rollNo, days }, secret);
     
     if (result) {
@@ -694,39 +691,36 @@
   
   // Check Premium
   async function checkPremium() {
-    const rollNo = document.getElementById('checkRollNo').value.trim();
-    
-    if (!rollNo) {
-      showMessage('Please enter a roll number', 'error');
-      return;
-    }
-    
-    const result = await apiCall(`/api/admin/check-premium?rollNo=${rollNo}`, 'GET');
+    const result = await apiCall('/api/admin/payments', 'GET');
     
     if (result) {
       showResult('checkPremiumResult', result);
+      showMessage('✅ Payment records retrieved', 'success');
     }
   }
   
   // List Users
   async function listUsers() {
-    const result = await apiCall('/api/admin/list-users', 'GET');
+    const result = await apiCall('/api/admin/payments', 'GET');
     
-    if (result && result.users) {
-      let html = '<table class="table"><thead><tr><th>Roll No</th><th>Email</th><th>Premium</th><th>Expiry</th><th>Device Locks</th></tr></thead><tbody>';
+    if (result && (result.payments || result)) {
+      const payments = result.payments || result;
+      let html = '<table class="table"><thead><tr><th>Email</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>';
       
-      result.users.forEach(user => {
-        const isPremium = user.premium_expiry > Date.now();
-        const badge = isPremium ? '<span class="badge active">ACTIVE</span>' : '<span class="badge expired">EXPIRED</span>';
-        const expiry = user.premium_expiry ? new Date(user.premium_expiry).toLocaleDateString() : 'N/A';
-        const deviceLocks = user.device_locks ? user.device_locks.length : 0;
-        
-        html += `<tr><td>${user.rollNo}</td><td>${user.email}</td><td>${badge}</td><td>${expiry}</td><td>${deviceLocks}</td></tr>`;
-      });
+      if (Array.isArray(payments)) {
+        payments.forEach(payment => {
+          const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
+          const status = payment.status || 'N/A';
+          
+          html += `<tr><td>${payment.email || 'N/A'}</td><td>${payment.amount || 'N/A'}</td><td>${status}</td><td>${date}</td></tr>`;
+        });
+      }
       
       html += '</tbody></table>';
       document.getElementById('usersResult').innerHTML = html;
-      showMessage(`✅ Loaded ${result.users.length} users`, 'success');
+      showMessage(`✅ Loaded payment data`, 'success');
+    } else {
+      showMessage('No payment data available', 'info');
     }
   }
   
