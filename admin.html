@@ -746,92 +746,86 @@
   async function loadAnalytics() {
     const result = await apiCall('/api/admin/payments', 'GET');
     
-    if (!result) return;
+    if (!result || !Array.isArray(result)) return;
     
-    const payments = Array.isArray(result) ? result : (result.payments || []);
+    const payments = result;
     
     // Calculate statistics
     const total = payments.length;
-    const enrolled = payments.filter(p => p.status === 'Submitted' || p.submitted).length;
-    const pending = payments.filter(p => p.status !== 'Submitted' && !p.submitted).length;
-    const revenue = payments.reduce((sum, p) => sum + (parseInt(p.markText) || 0), 0);
+    const uniqueEmails = new Set(payments.map(p => p.email)).size;
+    const totalRevenue = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     
     // Update stat boxes
     document.getElementById('statsTotal').textContent = total;
-    document.getElementById('statsEnrolled').textContent = enrolled;
-    document.getElementById('statsPending').textContent = pending;
-    document.getElementById('statsRevenue').textContent = `PKR ${revenue}`;
+    document.getElementById('statsEnrolled').textContent = uniqueEmails;
+    document.getElementById('statsPending').textContent = '0';
+    document.getElementById('statsRevenue').textContent = `PKR ${totalRevenue.toLocaleString()}`;
     
-    // Create enrollment breakdown table
-    let html = '<table class="table" style="margin-top: 12px;"><thead><tr><th>Email</th><th>Enrollment ID</th><th>Course</th><th>Status</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
+    // Create payment breakdown table
+    let html = '<table class="table" style="margin-top: 12px;"><thead><tr><th>Email</th><th>Product</th><th>Amount</th><th>Currency</th><th>Order ID</th><th>Paid Date</th></tr></thead><tbody>';
     
     payments.forEach(p => {
-      const enrollId = p.id || 'N/A';
-      const course = p.course || p.title || 'N/A';
-      const statusBadge = (p.status === 'Submitted' || p.submitted) 
-        ? '<span class="badge active">✓ ENROLLED</span>' 
-        : '<span class="badge pending">⏱ PENDING</span>';
-      const date = p.dueDate ? new Date(p.dueDate).toLocaleDateString() : 'N/A';
-      const amount = p.markText || 'N/A';
+      const date = p.paid_at ? new Date(p.paid_at).toLocaleDateString() : 'N/A';
+      const product = p.product || 'N/A';
+      const amount = p.amount || 'N/A';
+      const currency = p.currency || 'PKR';
+      const orderId = p.order_id || p.id || 'N/A';
       
       html += `<tr>
         <td style="font-size: 12px;">${p.email || 'N/A'}</td>
-        <td style="font-size: 12px;">${enrollId}</td>
-        <td style="font-size: 12px;">${course}</td>
-        <td>${statusBadge}</td>
-        <td>${amount}</td>
+        <td style="font-size: 12px;">${product}</td>
+        <td style="font-size: 12px;">${amount}</td>
+        <td style="font-size: 12px;">${currency}</td>
+        <td style="font-size: 12px;">${orderId}</td>
         <td>${date}</td>
       </tr>`;
     });
     
     html += '</tbody></table>';
     document.getElementById('analyticsResult').innerHTML = html;
-    showMessage(`✅ Analytics loaded: ${total} total, ${enrolled} enrolled, ${pending} pending`, 'success');
+    showMessage(`✅ Analytics loaded: ${total} orders from ${uniqueEmails} users, Revenue: PKR ${totalRevenue.toLocaleString()}`, 'success');
   }
   
   // List Users
   async function listUsers() {
     const result = await apiCall('/api/admin/payments', 'GET');
     
-    if (result && (result.payments || result)) {
-      const payments = result.payments || result;
+    if (result && Array.isArray(result)) {
       let html = `<table class="table">
         <thead>
           <tr>
             <th>Email</th>
-            <th>Enrollment ID</th>
-            <th>Status</th>
+            <th>Product</th>
             <th>Amount</th>
-            <th>Date</th>
+            <th>Currency</th>
+            <th>Status</th>
+            <th>Paid Date</th>
           </tr>
         </thead>
         <tbody>`;
       
-      if (Array.isArray(payments)) {
-        payments.forEach(payment => {
-          const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
-          const status = payment.status || 'Submitted';
-          const statusBadge = status === 'Submitted' 
-            ? '<span class="badge active">ACTIVE</span>' 
-            : '<span class="badge pending">PENDING</span>';
-          const enrollmentId = payment.id || payment.enrollmentId || 'N/A';
-          const amount = payment.amount ? `${payment.amount} PKR` : payment.markText || 'N/A';
-          
-          html += `<tr>
-            <td>${payment.email || 'N/A'}</td>
-            <td>${enrollmentId}</td>
-            <td>${statusBadge}</td>
-            <td>${amount}</td>
-            <td>${date}</td>
-          </tr>`;
-        });
-      }
+      result.forEach(payment => {
+        const date = payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : 'N/A';
+        const statusBadge = '<span class="badge active">✓ PAID</span>';
+        const product = payment.product || 'N/A';
+        const amount = payment.amount || 'N/A';
+        const currency = payment.currency || 'PKR';
+        
+        html += `<tr>
+          <td>${payment.email || 'N/A'}</td>
+          <td>${product}</td>
+          <td>${amount}</td>
+          <td>${currency}</td>
+          <td>${statusBadge}</td>
+          <td>${date}</td>
+        </tr>`;
+      });
       
       html += '</tbody></table>';
       document.getElementById('usersResult').innerHTML = html;
-      showMessage(`✅ Loaded ${Array.isArray(payments) ? payments.length : 1} user records`, 'success');
+      showMessage(`✅ Loaded ${result.length} payment records`, 'success');
     } else {
-      showMessage('No user data available', 'info');
+      showMessage('No payment data available', 'info');
     }
   }
   
