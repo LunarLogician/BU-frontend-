@@ -3,968 +3,1650 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BU App — Check Attendance Without Portal Hell</title>
-<link rel="icon" type="image/png" href="./public/logo.png">
+<title>BU Assistant — your attendance is cooked fr fr</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
   :root {
-    --cyan: #3dcbfb;
-    --blue: #2184d7;
-    --royal: #1f3c7e;
-    --indigo: #2d27a0;
-    --purple: #7c208f;
-    --magenta: #c82278;
-    --orange: #ff870f;
-    --gold: #fdb223;
-    --logo-gradient: linear-gradient(135deg, #3dcbfb 0%, #2184d7 20%, #1f3c7e 45%, #7c208f 70%, #c82278 85%, #ff870f 100%);
-    --bg: #ffffff;
-    --surface: rgba(0,0,0,0.02);
-    --border: rgba(0,0,0,0.08);
-    --text: #1a1f35;
-    --muted: #5a6473;
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
+    --slime: #CCFF00;
+    --hot-pink: #FF006E;
+    --cyan: #00F5FF;
+    --void: #0a0a0a;
+    --off-white: #f5f5f0;
+    --warning: #FF4D00;
   }
-  
-  html { scroll-behavior: smooth; }
+
   body {
-    font-family: var(--font-body);
-    background: var(--bg);
-    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--void);
+    color: var(--off-white);
     overflow-x: hidden;
-    line-height: 1.6;
+    cursor: crosshair;
   }
 
-  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+  ::selection {
+    background: var(--slime);
+    color: var(--void);
+  }
 
-  /* NAV */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    padding: 12px 24px;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(24px);
-    border-bottom: 0.5px solid var(--border);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  /* Noise overlay */
+  .noise {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
-  .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; color: var(--text); }
-  .nav-logo-text { background: var(--logo-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 16px; font-family: var(--font-display); }
-  .nav-cta {
-    background: var(--logo-gradient); color: white; border: none;
-    border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 20px rgba(200,34,120,0.2);
-  }
-  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(200,34,120,0.3); }
 
-  /* HERO */
-  .hero {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 120px 0 60px; position: relative; overflow: hidden;
-    background: linear-gradient(135deg, rgba(61,203,251,0.08) 0%, rgba(200,34,120,0.05) 50%, rgba(255,135,15,0.04) 100%);
-  }
-  .hero::before {
-    content: ''; position: absolute; inset: 0; z-index: 0;
-    background: radial-gradient(circle at 20% 50%, rgba(61,203,251,0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(200,34,120,0.06) 0%, transparent 50%),
-                radial-gradient(circle at 90% 10%, rgba(255,135,15,0.04) 0%, transparent 40%);
+  /* Custom cursor */
+  .cursor-dot,
+  .cursor-outline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 9999;
     pointer-events: none;
   }
+
+  .cursor-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--slime);
+  }
+
+  .cursor-outline {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--slime);
+    transition: width 0.2s, height 0.2s;
+  }
+
+  /* Typography */
+  h1, h2, h3 {
+    font-family: 'Syne', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+  }
+
+  /* Glitch effect */
+  .glitch {
+    position: relative;
+    animation: glitch-skew 1s infinite linear alternate-reverse;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .glitch::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--hot-pink);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+  }
+
+  .glitch::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--cyan);
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+  }
+
+  @keyframes glitch-anim {
+    0% { clip: rect(30px, 9999px, 10px, 0); }
+    20% { clip: rect(80px, 9999px, 90px, 0); }
+    40% { clip: rect(10px, 9999px, 50px, 0); }
+    60% { clip: rect(60px, 9999px, 20px, 0); }
+    80% { clip: rect(20px, 9999px, 70px, 0); }
+    100% { clip: rect(90px, 9999px, 30px, 0); }
+  }
+
+  @keyframes glitch-anim2 {
+    0% { clip: rect(10px, 9999px, 80px, 0); }
+    20% { clip: rect(70px, 9999px, 20px, 0); }
+    40% { clip: rect(30px, 9999px, 60px, 0); }
+    60% { clip: rect(90px, 9999px, 10px, 0); }
+    80% { clip: rect(50px, 9999px, 40px, 0); }
+    100% { clip: rect(20px, 9999px, 90px, 0); }
+  }
+
+  @keyframes glitch-skew {
+    0% { transform: skew(0deg); }
+    10% { transform: skew(-2deg); }
+    20% { transform: skew(2deg); }
+    30% { transform: skew(0deg); }
+    100% { transform: skew(0deg); }
+  }
+
+  /* Marquee */
+  .marquee-container {
+    background: var(--slime);
+    color: var(--void);
+    padding: 0.8rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    transform: rotate(-1deg);
+    margin: 2rem -10px;
+    border-top: 3px solid var(--void);
+    border-bottom: 3px solid var(--void);
+  }
+
+  .marquee-content {
+    display: inline-block;
+    animation: marquee 20s linear infinite;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+  }
+
+  .marquee-content span {
+    display: inline-block;
+    padding: 0 3rem;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Layout */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* Navigation */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1.5rem 0;
+    mix-blend-mode: difference;
+  }
+
+  .nav-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    color: var(--off-white);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    color: var(--off-white);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--slime);
+    transition: width 0.3s;
+  }
+
+  .nav-links a:hover::after {
+    width: 100%;
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-top: 100px;
+    overflow: hidden;
+  }
+
+  .hero-bg-text {
+    position: absolute;
+    font-size: 20vw;
+    font-weight: 800;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(204, 255, 0, 0.1);
+    text-transform: uppercase;
+    white-space: nowrap;
+    z-index: 0;
+    user-select: none;
+    animation: float-text 20s ease-in-out infinite;
+  }
+
+  @keyframes float-text {
+    0%, 100% { transform: translateX(-10%) translateY(0); }
+    50% { transform: translateX(-5%) translateY(-20px); }
+  }
+
   .hero-content {
-    max-width: 700px; position: relative; z-index: 1;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
   }
 
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(61,203,251,0.08);
-    border: 0.5px solid rgba(61,203,251,0.25);
-    border-radius: 100px; padding: 6px 16px;
-    font-size: 12px; color: var(--cyan); font-weight: 500; letter-spacing: 0.3px;
-    margin-bottom: 28px; animation: fadeUp 0.6s ease both;
+  .hero-text h1 {
+    font-size: clamp(3rem, 8vw, 7rem);
+    margin-bottom: 2rem;
+    line-height: 0.85;
   }
-  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
 
-  .att-alert {
-    display: inline-flex; align-items: center; gap: 12px;
-    background: rgba(255, 135, 15, 0.1);
-    border: 1.5px solid rgba(255, 135, 15, 0.4);
-    border-radius: 14px; padding: 12px 18px;
-    margin-bottom: 32px; animation: fadeUp 0.6s 0.1s ease both;
-    font-weight: 600; font-size: 14px;
+  .hero-text h1 span {
+    display: block;
+    color: var(--slime);
   }
-  .att-alert-icon { font-size: 24px; animation: throb 0.8s infinite; }
-  .att-alert-text { color: var(--orange); }
-  @keyframes throb { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.1) } }
 
-  .hero h1 {
-    font-family: var(--font-display); font-size: clamp(46px, 6vw, 82px);
-    font-weight: 800; line-height: 1.05; letter-spacing: -2.5px;
-    animation: fadeUp 0.6s 0.2s ease both;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  .hero-tag {
+    display: inline-block;
+    background: var(--hot-pink);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transform: rotate(-2deg);
+    margin-bottom: 2rem;
+    animation: pulse 2s infinite;
   }
-  .hero h1 .accent {
-    background: var(--logo-gradient);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+
+  @keyframes pulse {
+    0%, 100% { transform: rotate(-2deg) scale(1); }
+    50% { transform: rotate(-2deg) scale(1.05); }
   }
-  .hero p {
-    font-size: 17px; color: var(--muted); max-width: 550px;
-    margin-top: 20px; line-height: 1.75; font-weight: 300;
-    animation: fadeUp 0.6s 0.3s ease both;
+
+  .hero-desc {
+    font-size: 1.3rem;
+    line-height: 1.4;
+    margin-bottom: 3rem;
+    max-width: 500px;
+    color: rgba(245, 245, 240, 0.8);
   }
-  .hero-actions {
-    display: flex; align-items: center; gap: 14px;
-    margin-top: 48px; flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.4s ease both;
-  }
-  .btn-primary {
-    background: var(--logo-gradient); color: white; border: none;
-    border-radius: 12px; padding: 18px 36px; font-size: 16px; font-weight: 700;
-    font-family: var(--font-body); cursor: pointer; transition: all 0.3s;
-    box-shadow: 0 12px 40px rgba(200,34,120,0.35);
-    position: relative; overflow: hidden;
-  }
-  .btn-primary::before {
-    content: ''; position: absolute; top: 0; left: -100%;
-    width: 100%; height: 100%; background: rgba(255,255,255,0.2);
-    transition: left 0.3s; z-index: 0;
-  }
-  .btn-primary:hover {
-    transform: translateY(-3px); box-shadow: 0 20px 60px rgba(200,34,120,0.45);
-    opacity: 0.95;
-  }
-  .btn-primary:hover::before { left: 100%; }
-  .btn-outline {
-    background: transparent; color: var(--muted);
-    border: 0.5px solid var(--border); border-radius: 11px;
-    padding: 16px 32px; font-size: 15px; font-weight: 400;
-    font-family: var(--font-body); cursor: pointer; transition: all 0.2s;
-  }
-  .btn-outline:hover { border-color: rgba(61,203,251,0.5); color: var(--blue); background: rgba(61,203,251,0.04); }
 
   .hero-stats {
-    display: flex; gap: 50px; margin-top: 64px; flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.5s ease both;
-  }
-  .hero-stat .num {
-    font-family: var(--font-display); font-size: 32px; font-weight: 800;
-    background: var(--logo-gradient); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-  }
-  .hero-stat .lbl { font-size: 13px; color: var(--muted); margin-top: 3px; }
-
-  /* HERO POINTS */
-  .hero-points {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px;
-    margin-top: 28px; margin-bottom: 36px; max-width: 600px;
-    animation: fadeUp 0.6s 0.3s ease both;
-  }
-  @media (max-width: 600px) { .hero-points { grid-template-columns: 1fr; gap: 12px; } }
-  .hero-point {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px 0; border-bottom: 0.5px solid rgba(61,203,251,0.1);
-  }
-  .hero-point-icon {
-    width: 24px; height: 24px; flex-shrink: 0; display: flex;
-    align-items: center; justify-content: center; font-size: 16px; margin-top: 2px;
-  }
-  .hero-point-text {
-    font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4;
-  }
-  .hero-point-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 300; }
-
-  /* HERO LINKS */
-  .hero-links {
-    display: flex; gap: 28px; margin-top: 24px; flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.35s ease both;
-  }
-  .hero-links a {
-    font-size: 14px; font-weight: 500; color: var(--blue);
-    border-bottom: 2px solid rgba(33, 132, 215, 0.4);
-    padding-bottom: 3px; transition: all 0.2s;
-    text-decoration: none; cursor: pointer;
-  }
-  .hero-links a:hover {
-    color: var(--cyan); border-bottom-color: rgba(61, 203, 251, 0.8);
-    transform: translateX(2px);
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 3rem;
   }
 
-  @keyframes fadeUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
-
-  /* STRIP */
-  .strip {
-    border-top: 0.5px solid var(--border);
-    border-bottom: 0.5px solid var(--border);
-    padding: 18px 0; background: rgba(0,0,0,0.02); overflow: hidden;
+  .stat {
+    border-left: 3px solid var(--slime);
+    padding-left: 1rem;
   }
-  .strip-track { display: flex; gap: 48px; width: max-content; animation: scroll 22s linear infinite; }
-  @keyframes scroll { from { transform:translateX(0) } to { transform:translateX(-50%) } }
-  .strip-item { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 500; color: var(--muted); white-space: nowrap; }
-  .strip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--logo-gradient); }
 
-  /* SECTIONS */
-  section { padding: 96px 0; position: relative; }
-  .sec-label {
-    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 14px;
-    background: var(--logo-gradient); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
+  .stat-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--slime);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(245, 245, 240, 0.6);
+    margin-top: 0.3rem;
+  }
+
+  /* Phone mockup */
+  .phone-mockup {
+    position: relative;
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+    transform: perspective(1000px) rotateY(-15deg) rotateX(5deg);
+    transition: transform 0.5s;
+  }
+
+  .phone-mockup:hover {
+    transform: perspective(1000px) rotateY(-5deg) rotateX(0deg);
+  }
+
+  .phone-frame {
+    background: #1a1a1a;
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow: 
+      0 50px 100px -20px rgba(0,0,0,0.8),
+      0 30px 60px -30px rgba(204, 255, 0, 0.3),
+      inset 0 0 0 2px rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .phone-screen {
+    background: var(--void);
+    border-radius: 30px;
+    overflow: hidden;
+    aspect-ratio: 9/19;
+    position: relative;
+  }
+
+  .app-ui {
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .app-time {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .attendance-card {
+    background: linear-gradient(135deg, rgba(204, 255, 0, 0.1), rgba(255, 0, 110, 0.1));
+    border: 1px solid rgba(204, 255, 0, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .attendance-percent {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--slime);
+  }
+
+  .attendance-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.6);
+    margin-top: 0.5rem;
+  }
+
+  .subject-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+
+  .subject-item {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .subject-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .subject-percent {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: var(--cyan);
+  }
+
+  .warning-badge {
+    position: absolute;
+    top: 20px;
+    right: -20px;
+    background: var(--warning);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    transform: rotate(15deg);
+    z-index: 10;
+    box-shadow: 0 10px 30px rgba(255, 77, 0, 0.4);
+  }
+
+  /* Buttons */
+  .btn-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--slime);
+    color: var(--void);
+    border: none;
+    padding: 1.2rem 2.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 0 100%);
+  }
+
+  .btn-primary:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 4px 4px 0 var(--hot-pink);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--off-white);
+    border: 2px solid var(--off-white);
+    padding: 1.2rem 2.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-secondary:hover {
+    background: var(--off-white);
+    color: var(--void);
+  }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    animation: bounce 2s infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
+  }
+
+  /* Pain points section */
+  .pain-points {
+    padding: 10rem 0;
+    position: relative;
+  }
+
+  .section-header {
+    margin-bottom: 5rem;
+  }
+
+  .section-tag {
     display: inline-block;
-  }
-  .sec-title {
-    font-family: var(--font-display); font-size: clamp(32px, 4vw, 52px);
-    font-weight: 800; line-height: 1.1; letter-spacing: -1.5px;
-  }
-  .sec-sub { font-size: 17px; color: var(--muted); margin-top: 14px; max-width: 600px; font-weight: 300; line-height: 1.75; }
-
-  /* FEATURES */
-  .feat-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 1px; background: var(--border);
-    border: 0.5px solid var(--border); border-radius: 18px;
-    overflow: hidden; margin-top: 56px;
-  }
-  @media (max-width: 700px) { .feat-grid { grid-template-columns: 1fr; } }
-  .feat-cell {
-    background: #f8fafb; padding: 34px 28px;
-    transition: background 0.25s;
-  }
-  .feat-cell:hover { background: #ffffff; }
-  .feat-cell.highlight {
-    background: rgba(124, 32, 143, 0.06) !important;
-    border: 1.5px solid rgba(124, 32, 143, 0.3) !important;
-    box-shadow: 0 8px 24px rgba(124, 32, 143, 0.12);
-  }
-  .feat-cell.highlight h3 {
-    background: var(--logo-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .feat-icon {
-    width: 42px; height: 42px; border-radius: 11px; margin-bottom: 18px;
-    display: flex; align-items: center; justify-content: center; font-size: 22px;
-    background: rgba(0,0,0,0.04);
-  }
-  .feat-cell h3 { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 9px; }
-  .feat-cell p { font-size: 13px; color: var(--muted); line-height: 1.65; font-weight: 300; }
-
-  /* SCENARIOS - Gen Z Memes */
-  .scenarios-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 18px; margin-top: 52px;
-  }
-  .scenario-card {
-    background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: 18px; padding: 32px; position: relative; overflow: hidden;
-    transition: all 0.25s;
-  }
-  .scenario-card:hover { transform: translateY(-4px); border-color: rgba(61,203,251,0.5); }
-  .scenario-emoji { font-size: 48px; margin-bottom: 14px; animation: bounce 1s infinite; }
-  @keyframes bounce { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
-  .scenario-title {
-    font-family: var(--font-display); font-size: 18px; font-weight: 700;
-    margin-bottom: 9px; color: var(--text);
-  }
-  .scenario-desc {
-    font-size: 13px; color: var(--muted); line-height: 1.65; font-weight: 300;
+    background: var(--hot-pink);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
   }
 
-  /* WHATSAPP SOCIAL PROOF */
-  .whatsapp-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 24px; margin-top: 52px;
+  .section-title {
+    font-size: clamp(2.5rem, 5vw, 5rem);
+    max-width: 800px;
   }
-  .whatsapp-msgs {
-    display: flex; flex-direction: column; gap: 10px;
-    background: #ece5dd; border-radius: 14px; padding: 16px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  }
-  .msg {
-    padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.4;
-    word-wrap: break-word; max-width: 85%;
-  }
-  .msg-out { background: #dcf8c6; align-self: flex-end; }
-  .msg-in { background: #ffffff; align-self: flex-start; }
-  .msg-name { font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--muted); padding: 0 12px; }
-  .msg-time { font-size: 11px; opacity: 0.5; margin-top: 3px; }
 
-  /* VIDEO DEMO */
-  .demo-wrapper {
-    max-width: 100%; margin-top: 56px; display: flex; flex-direction: column; align-items: center;
+  .pain-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
   }
-  .video-demo {
-    border-radius: 20px; overflow: hidden; background: #000;
-    aspect-ratio: 9/16; max-width: 420px; width: 100%;
-    border: 0.5px solid rgba(61,203,251,0.2);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+
+  .pain-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
   }
-  @media (min-width: 768px) {
-    .video-demo {
-      max-width: 480px;
+
+  .pain-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--gradient);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .pain-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--slime);
+    background: rgba(204, 255, 0, 0.05);
+  }
+
+  .pain-card:hover::before {
+    opacity: 1;
+  }
+
+  .pain-emoji {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    display: block;
+  }
+
+  .pain-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--off-white);
+  }
+
+  .pain-card p {
+    color: rgba(245, 245, 240, 0.6);
+    line-height: 1.6;
+    font-size: 1.1rem;
+  }
+
+  .pain-number {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 4rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.05);
+    line-height: 1;
+  }
+
+  /* Features section */
+  .features {
+    padding: 10rem 0;
+    background: var(--off-white);
+    color: var(--void);
+    position: relative;
+    clip-path: polygon(0 5%, 100% 0, 100% 95%, 0 100%);
+  }
+
+  .features .section-title {
+    color: var(--void);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+  }
+
+  .feature-block {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    border: 2px solid var(--void);
+    background: white;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .feature-block::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 100%;
+    height: 100%;
+    background: var(--slime);
+    z-index: -1;
+    transition: all 0.3s;
+  }
+
+  .feature-block:hover {
+    transform: translate(10px, 10px);
+  }
+
+  .feature-block:hover::after {
+    top: 0;
+    left: 0;
+  }
+
+  .feature-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--void);
+    color: var(--slime);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .feature-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .feature-content p {
+    color: rgba(10, 10, 10, 0.7);
+    line-height: 1.5;
+  }
+
+  /* Testimonials */
+  .testimonials {
+    padding: 10rem 0;
+    overflow: hidden;
+  }
+
+  .testimonials-header {
+    text-align: center;
+    margin-bottom: 5rem;
+  }
+
+  .testimonials-track {
+    display: flex;
+    gap: 2rem;
+    animation: scroll-left 30s linear infinite;
+    width: max-content;
+  }
+
+  .testimonials:hover .testimonials-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes scroll-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .testimonial-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 2.5rem;
+    width: 400px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .testimonial-card::before {
+    content: '"';
+    position: absolute;
+    top: 1rem;
+    right: 2rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 6rem;
+    color: rgba(204, 255, 0, 0.1);
+    line-height: 1;
+  }
+
+  .testimonial-text {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    color: rgba(245, 245, 240, 0.9);
+  }
+
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .author-avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--void);
+    background: var(--slime);
+  }
+
+  .author-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .author-info span {
+    font-size: 0.9rem;
+    color: rgba(245, 245, 240, 0.5);
+  }
+
+  .verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(204, 255, 0, 0.1);
+    color: var(--slime);
+    padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+
+  /* Pricing */
+  .pricing {
+    padding: 10rem 0;
+    position: relative;
+  }
+
+  .pricing-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.02);
+    border: 2px solid var(--slime);
+    border-radius: 30px;
+    padding: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pricing-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(204, 255, 0, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .pricing-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .price-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 6rem;
+    font-weight: 800;
+    color: var(--slime);
+    line-height: 1;
+    margin: 2rem 0;
+  }
+
+  .price-tag span {
+    font-size: 2rem;
+    color: rgba(245, 245, 240, 0.5);
+  }
+
+  .price-features {
+    list-style: none;
+    text-align: left;
+    max-width: 350px;
+    margin: 2rem auto;
+  }
+
+  .price-features li {
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .price-features li::before {
+    content: '→';
+    color: var(--slime);
+    font-weight: 700;
+  }
+
+  .urgency {
+    background: var(--hot-pink);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-top: 2rem;
+    font-weight: 600;
+    animation: shake 3s infinite;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    2% { transform: translateX(-5px); }
+    4% { transform: translateX(5px); }
+    6% { transform: translateX(-5px); }
+    8% { transform: translateX(5px); }
+    10% { transform: translateX(0); }
+  }
+
+  /* FAQ */
+  .faq {
+    padding: 10rem 0;
+    background: var(--off-white);
+    color: var(--void);
+    clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .faq-grid {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .faq-item {
+    background: white;
+    border: 2px solid var(--void);
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .faq-item:hover {
+    transform: translateX(10px);
+    box-shadow: -10px 10px 0 var(--void);
+  }
+
+  .faq-question {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .faq-answer {
+    margin-top: 1rem;
+    color: rgba(10, 10, 10, 0.7);
+    line-height: 1.6;
+    display: none;
+  }
+
+  .faq-item.active .faq-answer {
+    display: block;
+  }
+
+  .faq-item.active .faq-question::after {
+    content: '−';
+  }
+
+  .faq-question::after {
+    content: '+';
+    font-size: 2rem;
+    font-weight: 300;
+  }
+
+  /* Footer */
+  footer {
+    padding: 5rem 0 2rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 4rem;
+    margin-bottom: 4rem;
+  }
+
+  .footer-brand {
+    max-width: 300px;
+  }
+
+  .footer-brand .logo {
+    margin-bottom: 1rem;
+    font-size: 2rem;
+  }
+
+  .footer-brand p {
+    color: rgba(245, 245, 240, 0.6);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .social-links a {
+    width: 45px;
+    height: 45px;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--off-white);
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
+  .social-links a:hover {
+    background: var(--slime);
+    color: var(--void);
+    border-color: var(--slime);
+  }
+
+  .footer-links h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    color: var(--slime);
+  }
+
+  .footer-links ul {
+    list-style: none;
+  }
+
+  .footer-links li {
+    margin-bottom: 0.8rem;
+  }
+
+  .footer-links a {
+    color: rgba(245, 245, 240, 0.6);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .footer-links a:hover {
+    color: var(--slime);
+  }
+
+  .footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    color: rgba(245, 245, 240, 0.4);
+    font-size: 0.9rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .hero-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .phone-mockup {
+      order: -1;
+      max-width: 280px;
+    }
+    
+    .pain-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
     }
   }
-  @media (min-width: 1024px) {
-    .video-demo {
-      max-width: 520px;
-    }
-  }
-  .video-demo video, .video-placeholder {
-    width: 100%; height: 100%; object-fit: cover;
-  }
-  .video-placeholder {
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    color: #fff; font-size: 18px;
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .hero-stats { flex-direction: column; gap: 1.5rem; }
+    .btn-group { flex-direction: column; }
+    .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .testimonial-card { width: 320px; }
   }
 
-  /* PRICING */
-  .pricing-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 24px; max-width: 960px; margin: 56px auto 0;
+  /* Easter egg */
+  .konami {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.1);
+    pointer-events: none;
   }
-  .price-card {
-    background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: 20px; padding: 34px 30px; position: relative; overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-  }
-  .price-card:hover { transform: translateY(-4px); }
-  .price-card.featured {
-    border-image: var(--logo-gradient) 1;
-    border: 1.5px solid transparent;
-    background: linear-gradient(#ffffff, #ffffff) padding-box, var(--logo-gradient) border-box;
-    box-shadow: 0 10px 40px rgba(33,132,215,0.08);
-  }
-
-  .pro-pill {
-    position: absolute; top: 18px; right: 18px;
-    background: var(--logo-gradient); color: white;
-    font-size: 10px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; padding: 4px 12px; border-radius: 100px;
-  }
-
-  .plan-lbl { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
-  .plan-price-row { display: flex; align-items: baseline; gap: 3px; margin-bottom: 5px; }
-  .plan-cur { font-size: 18px; font-weight: 600; color: var(--muted); }
-  .plan-amt {
-    font-family: var(--font-display); font-size: 48px; font-weight: 800;
-    letter-spacing: -2px;
-    background: var(--logo-gradient); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-  }
-  .plan-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; font-weight: 300; }
-  .plan-div { height: 0.5px; background: var(--border); margin: 20px 0; }
-  .plan-feats { list-style: none; display: flex; flex-direction: column; gap: 11px; margin-bottom: 28px; }
-  .plan-feats li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-  .fc {
-    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 10px;
-  }
-  .fc-yes { background: rgba(61,203,251,0.1); color: var(--cyan); }
-  .fc-no { background: rgba(0,0,0,0.03); color: var(--muted); }
-  li.no { color: var(--muted); }
-
-  .btn-plan { width: 100%; padding: 13px; border-radius: 11px; font-size: 15px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.25s; border: none; }
-  .btn-plan-out { background: transparent; color: var(--text); border: 0.5px solid var(--border); }
-  .btn-plan-out:hover { background: rgba(0,0,0,0.02); }
-  .btn-plan-grad {
-    background: var(--logo-gradient); color: white;
-    box-shadow: 0 8px 32px rgba(200,34,120,0.25);
-  }
-  .btn-plan-grad:hover { transform: translateY(-1px); box-shadow: 0 14px 44px rgba(200,34,120,0.38); opacity: 0.93; }
-
-  /* TEST CARD INFO */
-  .test-card-info {
-    background: rgba(255, 135, 15, 0.05);
-    border: 1px solid rgba(255, 135, 15, 0.2);
-    border-radius: 14px; padding: 20px;
-    margin-top: 28px;
-  }
-  .test-card-info h4 {
-    font-family: var(--font-display); font-weight: 700; margin-bottom: 12px;
-    color: var(--orange);
-  }
-  .test-card-info p { font-size: 13px; color: var(--text); line-height: 1.7; margin-bottom: 8px; }
-  .card-detail {
-    display: flex; justify-content: space-between; margin: 8px 0;
-    font-size: 12px; font-family: monospace;
-    background: rgba(0,0,0,0.02); padding: 8px 12px; border-radius: 8px;
-  }
-  .card-label { color: var(--muted); font-weight: 600; }
-  .card-value { color: var(--text); font-weight: 700; }
-
-  /* CTA */
-  .cta-sec { text-align: center; padding: 120px 0; }
-  .cta-sec h2 {
-    font-family: var(--font-display); font-size: clamp(36px, 5vw, 62px);
-    font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 18px;
-  }
-  .cta-sec h2 span {
-    background: var(--logo-gradient); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-  }
-  .cta-sec p { font-size: 17px; color: var(--muted); font-weight: 300; margin-bottom: 40px; }
-  .cta-btns { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
-
-  /* FOOTER */
-  footer { border-top: 0.5px solid var(--border); padding: 52px 0 32px; }
-  .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-  @media (max-width: 600px) { .foot-grid { grid-template-columns: 1fr; } }
-  .foot-brand p { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.7; }
-  .foot-col h4 { font-size: 12px; font-weight: 600; margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .foot-col ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
-  .foot-col a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
-  .foot-col a:hover { color: var(--cyan); }
-  .foot-bottom { border-top: 0.5px solid var(--border); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-  .foot-bottom p { font-size: 12px; color: var(--muted); }
-
-  @media (max-width: 900px) {
-    .hero { min-height: auto; padding: 100px 0 60px; }
-  }
-
-  /* MODAL */
-  .modal-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 24px; }
-  .modal-ov.open { display: flex; }
-  .modal-box {
-    background: #ffffff; border-radius: 22px; padding: 36px; width: 100%; max-width: 450px;
-    position: relative; animation: mIn 0.3s ease;
-    border: 0.5px solid var(--border);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.1);
-  }
-  @keyframes mIn { from { opacity:0; transform:scale(0.95) translateY(10px) } to { opacity:1; transform:scale(1) translateY(0) } }
-  .modal-x {
-    position: absolute; top: 16px; right: 16px;
-    background: rgba(0,0,0,0.05); border: none; color: var(--muted);
-    width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 15px;
-    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-  }
-  .modal-x:hover { background: rgba(0,0,0,0.08); color: var(--text); }
-  .modal-box h3 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-  #step2, #stepNotStudent { display: none; }
-  .who-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
-  .who-btn { padding: 14px 10px; border-radius: 12px; border: 1.5px solid var(--border); background: transparent; cursor: pointer; font-size: 14px; font-weight: 600; font-family: var(--font-body); color: var(--text); transition: all 0.2s; text-align: center; }
-  .who-btn:hover { border-color: #c82278; color: #c82278; background: rgba(200,34,120,0.04); }
-  .who-btn.selected { border-color: #c82278; background: rgba(200,34,120,0.08); color: #c82278; }
-  .who-btn .who-icon { font-size: 22px; display: block; margin-bottom: 5px; }
-  .not-student-msg { text-align: center; padding: 16px 0 8px; }
-  .not-student-msg .ns-icon { font-size: 36px; margin-bottom: 10px; }
-  .not-student-msg p { color: var(--muted); font-size: 14px; line-height: 1.5; }
-  .modal-field { margin-bottom: 14px; }
-  .modal-field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .modal-field input {
-    width: 100%; padding: 11px 13px;
-    background: rgba(0,0,0,0.02); border: 0.5px solid rgba(0,0,0,0.08);
-    border-radius: 9px; color: var(--text); font-size: 14px; font-family: var(--font-body);
-    transition: border-color 0.2s;
-  }
-  .modal-field input:focus { outline: none; border-color: rgba(61,203,251,0.4); }
-  .modal-field input::placeholder { color: var(--muted2); opacity: 0.5; }
-  .modal-info { background: rgba(0,0,0,0.02); border: 0.5px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 14px; margin-bottom: 22px; }
-  .modal-info p { font-size: 13px; color: var(--muted); line-height: 1.6; }
-  .modal-info strong { color: var(--text); }
-  .btn-pay {
-    width: 100%; padding: 13px; background: var(--logo-gradient); color: white;
-    border: none; border-radius: 11px; font-size: 15px; font-weight: 600;
-    font-family: var(--font-body); cursor: pointer; transition: all 0.25s;
-    box-shadow: 0 8px 32px rgba(200,34,120,0.25);
-  }
-  .btn-pay:hover { transform: translateY(-1px); box-shadow: 0 14px 44px rgba(200,34,120,0.4); opacity: 0.92; }
-  .modal-tag {
-    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
-    padding: 8px 14px; border-radius: 9px; font-size: 14px; font-weight: 600;
-    background: rgba(0,0,0,0.03); border: 0.5px solid rgba(0,0,0,0.08);
-  }
-  .modal-trust { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 14px; font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-inner">
-    <a class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:pointer">
-      <span class="nav-logo-text">BU App</span>
-    </a>
-    <button class="nav-cta btn-buy" data-plan="basic" data-price="0" style="cursor:pointer">Get Free (Beta)</button>
-  </div>
-</nav>
+<div class="noise"></div>
+<div class="cursor-dot"></div>
+<div class="cursor-outline"></div>
 
-<!-- HERO -->
-<header class="hero">
-  <div class="container">
-    <div class="hero-content">
-      <div class="hero-badge">
-        <div class="badge-dot"></div>
-        free for now (while beta)
-      </div>
-      
-      <div class="att-alert">
-        <div class="att-alert-icon">⚠️</div>
-        <div class="att-alert-text">YOUR ATTENDANCE: 62% 💀💀💀</div>
-      </div>
-
-      <h1>check your <span class="accent">attendance</span><br>without the portal hell</h1>
-
-      <div class="hero-points">
-        <div class="hero-point">
-          <div class="hero-point-icon">✓</div>
-          <div>
-            <div class="hero-point-text">attendance, assignments & quiz marks</div>
-            <div class="hero-point-sub">even when lms is down</div>
-          </div>
-        </div>
-        <div class="hero-point">
-          <div class="hero-point-icon">✓</div>
-          <div>
-            <div class="hero-point-text">submit assignments from app</div>
-            <div class="hero-point-sub">no need 4 portal</div>
-          </div>
-        </div>
-        <div class="hero-point">
-          <div class="hero-point-icon">✓</div>
-          <div>
-            <div class="hero-point-text">all ur data offline</div>
-            <div class="hero-point-sub">works anytime, anywhere</div>
-          </div>
-        </div>
-        <div class="hero-point">
-          <div class="hero-point-icon">✓</div>
-          <div>
-            <div class="hero-point-text">all bahria campuses</div>
-            <div class="hero-point-sub">karachi, lahore, islamabad & more</div>
-          </div>
-          
-        </div>
-      </div>
-
-      <div class="hero-actions">
-        <button class="btn-primary btn-buy" data-plan="basic" data-price="0" style="cursor:pointer">App is paid but free for now 
-          Download App — Free</button>
-
-        <button class="btn-outline" onclick="document.getElementById('scenarios').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">see what you get</button>
-      </div>
-
-      <div class="hero-links">
-        <a onclick="document.getElementById('video-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">👀 see video how ur app looks</a>
-        <a onclick="document.getElementById('pricing-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">💰 how to get for free</a>
-      </div>
-
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="num">40+</div>
-          <div class="lbl">students already using</div>
-        </div>
-        <div class="hero-stat">
-          <div class="num">2.3s</div>
-          <div class="lbl">load time (they take 30sec)</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</header>
-
-<div class="strip">
-  <div class="strip-track">
-    <div class="strip-item"><div class="strip-dot"></div>live attendance tracking</div>
-    <div class="strip-item"><div class="strip-dot"></div>class alarms b4 u miss</div>
-    <div class="strip-item"><div class="strip-dot"></div>assignment deadlines</div>
-    <div class="strip-item"><div class="strip-dot"></div>quiz marks instantly</div>
-    <div class="strip-item"><div class="strip-dot"></div>just works offline</div>
-    <div class="strip-item"><div class="strip-dot"></div>ur password is safe</div>
-    <div class="strip-item"><div class="strip-dot"></div>live attendance tracking</div>
-    <div class="strip-item"><div class="strip-dot"></div>class alarms b4 u miss</div>
-    <div class="strip-item"><div class="strip-dot"></div>assignment deadlines</div>
-    <div class="strip-item"><div class="strip-dot"></div>quiz marks instantly</div>
-    <div class="strip-item"><div class="strip-dot"></div>just works offline</div>
-    <div class="strip-item"><div class="strip-dot"></div>ur password is safe</div>
+<!-- Marquee -->
+<div class="marquee-container">
+  <div class="marquee-content">
+    <span>⚡ Portal down again? We got you</span>
+    <span>🔥 40+ students already saved</span>
+    <span>💀 No more "sir I was present" moments</span>
+    <span>⚠️ Your attendance is probably worse than you think</span>
+    <span>🚀 2.3 second load time vs 5 minutes on portal</span>
+    <span>⚡ Portal down again? We got you</span>
+    <span>🔥 40+ students already saved</span>
+    <span>💀 No more "sir I was present" moments</span>
+    <span>⚠️ Your attendance is probably worse than you think</span>
+    <span>🚀 2.3 second load time vs 5 minutes on portal</span>
   </div>
 </div>
 
-<!-- FEATURES -->
-<section>
-  <div class="container">
-    <div style="text-align:center">
-      <div class="sec-label">What you get</div>
-      <h2 class="sec-title">check the portal. but like... faster</h2>
-      <p class="sec-sub">we basically reverse-engineered the bahria cms so u don't have to pray it loads</p>
-    </div>
-    <div class="feat-grid">
-      <div class="feat-cell"><div class="feat-icon">📊</div><h3>real-time attendance</h3><p>exact percentage per subject. auto-refreshes every 3 hours. no more manual checking.</p></div>
-      <div class="feat-cell"><div class="feat-icon">📅</div><h3>class alarms before u sleep</h3><p>30-min before each class. never get called out for being late again. or do. we don't judge.</p></div>
-      <div class="feat-cell"><div class="feat-icon">📝</div><h3>assignment tracker</h3><p>all your submissions, deadlines, status in one place. push notifications so u don't forget.</p></div>
-      <div class="feat-cell"><div class="feat-icon">📈</div><h3>quiz marks. finally.</h3><p>check marks without logging in 47 times. portal usually takes 5 mins to load the same page.</p></div>
-      <div class="feat-cell highlight"><div class="feat-icon">🌙</div><h3>works offline</h3><p>cached data means attendance is always visible. no signal? no problem. ur data is there.</p></div>
-      <div class="feat-cell"><div class="feat-icon">🔒</div><h3>ur password stays safe</h3><p>encrypted on ur device only. we literally cannot see it. trust us (or don't, we get it).</p></div>
+<nav>
+  <div class="container nav-inner">
+    <div class="logo">BU Assistant</div>
+    <div class="nav-links">
+      <a href="#pain">The Problem</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
     </div>
   </div>
-</section>
+</nav>
 
-<!-- IF THIS IS YOU... MEME SECTION -->
-<section id="scenarios">
+<section class="hero">
+  <div class="hero-bg-text">ATTENDANCE</div>
   <div class="container">
-    <div style="text-align:center">
-      <div class="sec-label">Real Talk</div>
-      <h2 class="sec-title">if this is you... 💀</h2>
-      <p class="sec-sub">we've been there. multiple times.</p>
-    </div>
-    <div class="scenarios-grid">
-      <div class="scenario-card">
-        <div class="scenario-emoji">🕐</div>
-        <h3 class="scenario-title">Portal timeout at 11:59pm</h3>
-        <p class="scenario-desc">assignment due in 60 seconds. portal decides to take a nap. this app? instant load. peace of mind at 3am guaranteed.</p>
-      </div>
-      <div class="scenario-card">
-        <div class="scenario-emoji">🔄</div>
-        <h3 class="scenario-title">Attendance refresh gone wrong</h3>
-        <p class="scenario-desc">refreshing the page 47 times hoping the % changes. app shows the real number. ur attendance is already low. accept it.</p>
-      </div>
-      <div class="scenario-card">
-        <div class="scenario-emoji">📞</div>
-        <h3 class="scenario-title">Getting called out in class</h3>
-        <p class="scenario-desc">"why are u at 58%?" now u know instantly instead of finding out through the professor. stay informed. be ready.</p>
-      </div>
-      <div class="scenario-card">
-        <div class="scenario-emoji">⏰</div>
-        <h3 class="scenario-title">Missing class bc u slept thru it</h3>
-        <p class="scenario-desc">alarm goes off 30 mins before. ur bed is comfy but at least u got the reminder. attendance > sleep.</p>
-      </div>
-      <div class="scenario-card">
-        <div class="scenario-emoji">🧠</div>
-        <h3 class="scenario-title">Forgot when the quiz is</h3>
-        <p class="scenario-desc">all assignments and quiz dates in one app. no more surprises in the lecture. u got this.</p>
-      </div>
-      <div class="scenario-card">
-        <div class="scenario-emoji">🤖</div>
-        <h3 class="scenario-title">Portal crashes when u need it</h3>
-        <p class="scenario-desc">app is native android. no web nonsense. works even when the portal is having an existential crisis.</p>
-      </div>
-    </div>
-  </div>
-</section>
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-tag">⚠️ Beta Access Open</div>
+        <h1 class="glitch" data-text="YOUR PORTAL IS COOKED">
+          YOUR PORTAL<br>
+          <span>IS COOKED</span>
+        </h1>
+        <p class="hero-desc">
+          The official LMS takes 5 minutes to load on browser, crashes during submissions, and shows attendance from 3 weeks ago. We built this because we were tired of getting roasted by professors for being "absent" when we were literally sitting in class.
+        </p>
+        
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-number">40+</div>
+            <div class="stat-label">Students Saved</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">2.3s</div>
+            <div class="stat-label">Load Time</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Uptime</div>
+          </div>
+        </div>
 
-<!-- WHATSAPP PROOF -->
-<section>
-  <div class="container">
-    <div style="text-align:center">
-      <div class="sec-label">Real Students</div>
-      <h2 class="sec-title">what students are actually saying</h2>
-    </div>
-    <div class="whatsapp-grid">
-      <div>
-        <div class="whatsapp-msgs">
-          <div class="msg-name">Ali (CS)</div>
-          <div class="msg msg-in">yo bro the app is actually goated</div>
-          <div class="msg msg-in">check attendance before my parents ask lmao 💀</div>
-          <div class="msg msg-out">literally same</div>
-          <div class="msg msg-out">way faster than the portal</div>
-          <div class="msg msg-in">fr fr no cap</div>
+        <div class="btn-group">
+          <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+            Get App — Free
+          </button>
+          <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+            See How It Works
+          </button>
         </div>
       </div>
-      <div>
-        <div class="whatsapp-msgs">
-          <div class="msg-name">Zara (SE)</div>
-          <div class="msg msg-in">the 30 min alarm saved me from missing my presentation</div>
-          <div class="msg msg-in">would've been cooked otherwise 💀</div>
-          <div class="msg msg-out">bro same</div>
-          <div class="msg msg-out">got it last week already using</div>
-          <div class="msg msg-in">10/10 would recommend to anyone</div>
-        </div>
-      </div>
-      <div>
-        <div class="whatsapp-msgs">
-          <div class="msg-name">Hassan (EE)</div>
-          <div class="msg msg-in">finally no more portal lag</div>
-          <div class="msg msg-in">checked all my marks in 5 seconds</div>
-          <div class="msg msg-out">WHAT</div>
-          <div class="msg msg-out">portal takes 10 mins to load marks</div>
-          <div class="msg msg-in">exactly. just download it already</div>
+
+      <div class="phone-mockup">
+        <div class="warning-badge">URGENT</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="app-ui">
+              <div class="app-header">
+                <span style="font-weight:700;">BU Assistant</span>
+                <span class="app-time">9:41</span>
+              </div>
+              <div class="attendance-card">
+                <div style="font-size:0.8rem; opacity:0.6; margin-bottom:0.5rem;">OVERALL ATTENDANCE</div>
+                <div class="attendance-percent">62%</div>
+                <div class="attendance-label">You're on thin ice fr fr ❄️</div>
+              </div>
+              <div class="subject-list">
+                <div class="subject-item">
+                  <span class="subject-name">Database Systems</span>
+                  <span class="subject-percent">58%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Web Engineering</span>
+                  <span class="subject-percent">71%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Software Eng.</span>
+                  <span class="subject-percent">45%</span>
+                </div>
+                <div class="subject-item">
+                  <span class="subject-name">Computer Networks</span>
+                  <span class="subject-percent">82%</span>
+                </div>
+              </div>
+              <div style="margin-top:auto; background:rgba(255,0,110,0.1); border:1px solid rgba(255,0,110,0.3); border-radius:12px; padding:1rem; text-align:center;">
+                <span style="color:var(--hot-pink); font-size:0.8rem; font-weight:600;">⚠️ NEXT CLASS IN 30 MIN</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+  
+  <div class="scroll-hint">
+    <span style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.2em;">Scroll</span>
+    <span style="font-size:1.5rem;">↓</span>
+  </div>
 </section>
 
-<!-- PRICING -->
-<section id="pricing-section">
+<section class="pain-points" id="pain">
   <div class="container">
-    <div style="text-align:center">
-      <div class="sec-label">Pricing</div>
-      <h2 class="sec-title">$0 right now. because we get it.</h2>
-      <p class="sec-sub">students are broke. so the app is free for now while we're in beta. simple as that.</p>
+    <div class="section-header">
+      <div class="section-tag">Real Talk</div>
+      <h2 class="section-title">If you've experienced any of these, your portal is trash 💀</h2>
     </div>
-    <div class="pricing-grid">
-      <div class="price-card featured">
-        <div class="plan-lbl">beta plan</div>
-        <div class="plan-price-row"><span class="plan-amt">FREE</span></div>
-        <div class="plan-note">limited time. probably gonna charge later ngl</div>
-        <div class="plan-div"></div>
-        <ul class="plan-feats">
-          <li><span class="fc fc-yes">✓</span>real-time attendance tracking</li>
-          <li><span class="fc fc-yes">✓</span>full timetable view</li>
-          <li><span class="fc fc-yes">✓</span>class alarms (30 min before)</li>
-          <li><span class="fc fc-yes">✓</span>assignment tracker</li>
-          <li><span class="fc fc-yes">✓</span>quiz marks & grades</li>
-          <li><span class="fc fc-yes">✓</span>background sync every 3 hours</li>
-          <li><span class="fc fc-yes">✓</span>works offline</li>
+    
+    <div class="pain-grid">
+      <div class="pain-card">
+        <span class="pain-number">01</span>
+        <span class="pain-emoji">🕐</span>
+        <h3>The 11:59 PM Timeout</h3>
+        <p>Assignment due in 60 seconds. Portal decides to take a nap. You submit at 12:01. Professor says "system shows late." You're cooked.</p>
+      </div>
+      
+      <div class="pain-card">
+        <span class="pain-number">02</span>
+        <span class="pain-emoji">🔄</span>
+        <h3>Refresh Addiction</h3>
+        <p>Refreshing 47 times hoping your attendance percentage magically changes. Spoiler: it doesn't, but now your browser is crying.</p>
+      </div>
+      
+      <div class="pain-card">
+        <span class="pain-number">03</span>
+        <span class="pain-emoji">📞</span>
+        <h3>The Public Callout</h3>
+        <p>"Why are you at 58% attendance?" *whole class turns to look* You were present but the portal says otherwise. No proof, no argument.</p>
+      </div>
+      
+      <div class="pain-card">
+        <span class="pain-number">04</span>
+        <span class="pain-emoji">📱</span>
+        <h3>Mobile Disaster</h3>
+        <p>Trying to check attendance on your phone? Enjoy scrolling horizontally for 20 minutes while the table breaks completely.</p>
+      </div>
+      
+      <div class="pain-card">
+        <span class="pain-number">05</span>
+        <span class="pain-emoji">🔐</span>
+        <h3>Password Hell</h3>
+        <p>Forced to change password every month. Can't reuse old ones. Now you're writing passwords on sticky notes. Very secure, much wow.</p>
+      </div>
+      
+      <div class="pain-card">
+        <span class="pain-number">06</span>
+        <span class="pain-emoji">⏳</span>
+        <h3>The Loading Void</h3>
+        <p>Click login. Wait 3 minutes. Page times out. Repeat. By the time you're in, you've forgotten why you logged in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag" style="background:var(--void); color:var(--slime);">The Solution</div>
+      <h2 class="section-title">Built different. Actually works.</h2>
+    </div>
+    
+    <div class="features-grid">
+      <div class="feature-block">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-content">
+          <h3>Real-Time Attendance</h3>
+          <p>Updates every 3 hours automatically. No more guessing if you're actually at 75% or if that's last month's data. The truth, unfiltered.</p>
+        </div>
+      </div>
+      
+      <div class="feature-block">
+        <div class="feature-icon">🔔</div>
+        <div class="feature-content">
+          <h3>Smart Alerts</h3>
+          <p>30 minutes before class. Assignment due in 24 hours. Attendance dropping below 75%. We warn you before you get roasted.</p>
+        </div>
+      </div>
+      
+      <div class="feature-block">
+        <div class="feature-icon">💾</div>
+        <div class="feature-content">
+          <h3>Works Offline</h3>
+          <p>No signal in the basement classroom? No problem. Cached data means your attendance is always visible, even when the wifi isn't.</p>
+        </div>
+      </div>
+      
+      <div class="feature-block">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-content">
+          <h3>Actually Secure</h3>
+          <p>Your credentials are encrypted on YOUR device. We literally cannot see your password. Not stored on our servers. Ever.</p>
+        </div>
+      </div>
+      
+      <div class="feature-block">
+        <div class="feature-icon">📊</div>
+        <div class="feature-content">
+          <h3>Quiz Marks Instantly</h3>
+          <p>Check all your assessment marks without logging in 12 times. One tap, everything visible. Portal takes 5 minutes, we take 2 seconds.</p>
+        </div>
+      </div>
+      
+      <div class="feature-block">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-content">
+          <h3>Bunk Calculator</h3>
+          <p>Wondering how many classes you can skip and still hit 75%? We do the math. Plan your semester strategically. Live dangerously, but smart.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="testimonials">
+  <div class="container testimonials-header">
+    <div class="section-tag">Social Proof</div>
+    <h2 class="section-title">What they're saying (unfiltered)</h2>
+  </div>
+  
+  <div class="testimonials-track">
+    <div class="testimonial-card">
+      <p class="testimonial-text">"Yo this app is actually goated. Check my attendance before my parents ask lmao 💀 Way faster than the portal. Fr fr no cap."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">A</div>
+        <div class="author-info">
+          <h4>Ali R. <span class="verified">✓ Verified</span></h4>
+          <span>CS Student • 4th Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-card">
+      <p class="testimonial-text">"The 30 min alarm saved me from missing my presentation. Would've been cooked otherwise. Professor already hates me, this would've been the final nail."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">Z</div>
+        <div class="author-info">
+          <h4>Zara K. <span class="verified">✓ Verified</span></h4>
+          <span>Software Eng. • 3rd Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-card">
+      <p class="testimonial-text">"Finally no more portal lag. Checked all my marks in 5 seconds. Portal takes 10 minutes minimum. Just download it already, stop suffering."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">H</div>
+        <div class="author-info">
+          <h4>Hassan M. <span class="verified">✓ Verified</span></h4>
+          <span>EE Student • 3rd Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-card">
+      <p class="testimonial-text">"Thought it was cap but it's actually legit. The offline feature hits different when you're in the basement with no signal."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">S</div>
+        <div class="author-info">
+          <h4>Sana T. <span class="verified">✓ Verified</span></h4>
+          <span>CS Student • 2nd Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-card">
+      <p class="testimonial-text">"Bunk calculator is dangerous lmao. I calculated exactly how many classes I can skip. Currently at 76.4% attendance. Living on the edge."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">B</div>
+        <div class="author-info">
+          <h4>Bilal A. <span class="verified">✓ Verified</span></h4>
+          <span>SE Student • 4th Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Duplicate for infinite scroll -->
+    <div class="testimonial-card">
+      <p class="testimonial-text">"Yo this app is actually goated. Check my attendance before my parents ask lmao 💀 Way faster than the portal. Fr fr no cap."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">A</div>
+        <div class="author-info">
+          <h4>Ali R. <span class="verified">✓ Verified</span></h4>
+          <span>CS Student • 4th Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-card">
+      <p class="testimonial-text">"The 30 min alarm saved me from missing my presentation. Would've been cooked otherwise. Professor already hates me, this would've been the final nail."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">Z</div>
+        <div class="author-info">
+          <h4>Zara K. <span class="verified">✓ Verified</span></h4>
+          <span>Software Eng. • 3rd Year</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-card">
+      <p class="testimonial-text">"Finally no more portal lag. Checked all my marks in 5 seconds. Portal takes 10 minutes minimum. Just download it already, stop suffering."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">H</div>
+        <div class="author-info">
+          <h4>Hassan M. <span class="verified">✓ Verified</span></h4>
+          <span>EE Student • 3rd Year</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-header" style="text-align:center;">
+      <div class="section-tag">Pricing</div>
+      <h2 class="section-title" style="margin:0 auto;">Stop giving money to your caffeine addiction. Invest in sanity.</h2>
+    </div>
+    
+    <div class="pricing-card">
+      <div class="pricing-content">
+        <div class="section-tag" style="display:inline-block; margin-bottom:1rem;">Beta Access</div>
+        <div class="price-tag">FREE<span>/forever if you join now</span></div>
+        <p style="color:rgba(245,245,240,0.6); margin-bottom:2rem;">Join during beta and keep it free for life. After beta: probably $5/month or something idk.</p>
+        
+        <ul class="price-features">
+          <li>Unlimited attendance checks</li>
+          <li>Smart class alarms</li>
+          <li>Assignment tracking</li>
+          <li>Quiz marks access</li>
+          <li>Offline mode</li>
+          <li>Bunk calculator (dangerous feature)</li>
+          <li>Priority support (we actually reply)</li>
         </ul>
         
-        <div class="test-card-info">
-          <h4>🎟️ free for now. here's all u need:</h4>
-          <p><strong>the app is 100% free during beta testing.</strong> just use this test credit card to "complete" checkout (it won't charge u anything):</p>
-          <div class="card-detail">
-            <span class="card-label">card number:</span>
-            <span class="card-value">4242 4242 4242 4242</span>
-          </div>
-          <div class="card-detail">
-            <span class="card-label">expiry:</span>
-            <span class="card-value">any future date (e.g. 12/25)</span>
-          </div>
-          <div class="card-detail">
-            <span class="card-label">cvc:</span>
-            <span class="card-value">any 3 digits (e.g. 123)</span>
-          </div>
-          <p style="margin-top: 12px; font-size: 12px; font-style: italic;">literally won't charge. test card. we just need a "payment" to send u the apk link. no real money involved during beta.</p>
+        <button class="btn-primary" style="width:100%; font-size:1.2rem; padding:1.5rem;" onclick="openRoleModal();">
+          Claim Free Access →
+        </button>
+        
+        <div class="urgency">
+          ⚠️ Only 60 spots left for beta pricing. After that, we're charging. Fair warning.
         </div>
-
-        <button class="btn-plan btn-plan-grad btn-buy" data-plan="basic" data-price="0" style="margin-top: 20px; cursor:pointer">Get App Free (Right Now)</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DEMO VIDEO (if available) -->
-<section id="video-section">
+<section class="faq" id="faq">
   <div class="container">
-    <div style="text-align:center">
-      <div class="sec-label">See it in action</div>
-      <h2 class="sec-title">here's what it actually looks like when u use it</h2>
+    <div class="section-header" style="text-align:center;">
+      <div class="section-tag" style="background:var(--void); color:var(--slime);">Questions</div>
+      <h2 class="section-title" style="margin:0 auto; color:var(--void);">You got questions. We got answers.</h2>
     </div>
-    <div class="demo-wrapper">
-      <div class="video-demo">
-        <video controls style="width:100%; height:100%; object-fit: cover;">
-          <source src="./public/Video.mp4" type="video/mp4">
-          Your browser doesn't support html5 video
-        </video>
+    
+    <div class="faq-grid">
+      <div class="faq-item" onclick="this.classList.toggle('active')">
+        <div class="faq-question">Is this official? Will I get in trouble?</div>
+        <div class="faq-answer">Nah, we're not affiliated with the university. We're just students who got tired of the portal. We scrape public data (same data you see when you login) and present it better. It's like using a better calculator for math homework—not cheating, just smarter.</div>
       </div>
-      <p style="text-align: center; margin-top: 16px; font-size: 14px; color: var(--text); font-weight: 500;">
-        ✅ check your attendance instantly • ✅ submit assignments • ✅ track deadlines • ✅ get alerts
-      </p>
+      
+      <div class="faq-item" onclick="this.classList.toggle('active')">
+        <div class="faq-question">How do you access my attendance without my password?</div>
+        <div class="faq-answer">Magic. Just kidding—you enter your credentials once, we encrypt them on your device (AES-256), and use them to fetch your data. We literally cannot see your password. It's stored in your phone's secure storage, not our servers. We're too lazy to steal your data anyway.</div>
+      </div>
+      
+      <div class="faq-item" onclick="this.classList.toggle('active')">
+        <div class="faq-question">What if the app stops working?</div>
+        <div class="faq-answer">Then you go back to suffering with the portal. But seriously, if the university changes their system, we'll update within 24-48 hours. We've been running for 6 months without issues. Plus, it's free during beta, so you literally have nothing to lose except 2 minutes of download time.</div>
+      </div>
+      
+      <div class="faq-item" onclick="this.classList.toggle('active')">
+        <div class="faq-question">Can I trust you with my data?</div>
+        <div class="faq-answer">We don't store your data on our servers. Everything stays on your device. We couldn't sell your data even if we wanted to (we don't). We're students, not Facebook. Your attendance percentage isn't valuable to advertisers anyway.</div>
+      </div>
+      
+      <div class="faq-item" onclick="this.classList.toggle('active')">
+        <div class="faq-question">iOS or Android?</div>
+        <div class="faq-answer">Android first (APK download), iOS coming soon™. We know, we know, iPhone users suffer too. We're working on it. Join the waitlist and we'll email you the second it's ready. Probably. If we remember.</div>
+      </div>
+      
+      <div class="faq-item" onclick="this.classList.toggle('active')">
+        <div class="faq-question">Why is this free?</div>
+        <div class="faq-answer">Because we're nice. Also, we need users to test it. Also also, we might charge later once we add more features. Get in now while it's free and you'll keep it free forever. Early bird gets the worm and all that.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- CTA FINAL -->
-<section class="cta-sec">
-  <div class="container">
-    <h2>ur batchmates are <span>already using it</span></h2>
-    <p>40+ students. 2.3 second load time. free right now. what are u waiting for?</p>
-    <div class="cta-btns">
-      <button class="btn-primary btn-buy" data-plan="basic" data-price="0" style="font-size:16px;padding:15px 32px;cursor:pointer">download app free</button>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
 <footer>
   <div class="container">
-    <div class="foot-grid">
-      <div class="foot-brand">
-        <p>BU App — check ur attendance without losing ur mind. made for bahria university students by students who hated the portal.</p>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">BU Assistant</div>
+        <p>Built by students who were tired of getting roasted by professors for "low attendance" when the portal was just broken.</p>
+        <div class="social-links">
+          <a href="#">IG</a>
+          <a href="#">TW</a>
+          <a href="#">DC</a>
+        </div>
       </div>
-      <div class="foot-col">
+      
+      <div class="footer-links">
         <h4>Product</h4>
         <ul>
-          <li><a onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:pointer">Home</a></li>
-          <li><a onclick="document.getElementById('scenarios').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">Features</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Roadmap</a></li>
         </ul>
       </div>
-      <div class="foot-col">
-        <h4>Contact</h4>
+      
+      <div class="footer-links">
+        <h4>Support</h4>
         <ul>
-          <li><a href="mailto:zlabservices@gmail.com">email support</a></li>
-          <li><a href="#">privacy policy</a></li>
-          <li><a href="#">tos</a></li>
+          <li><a href="mailto:zlabservices@gmail.com">Email Us</a></li>
+          <li><a href="#">Report Bug</a></li>
+          <li><a href="#">Request Feature</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
         </ul>
       </div>
     </div>
-    <div class="foot-bottom">
-      <p>© 2024 BU App. free during beta. then we charge probably lol</p>
+    
+    <div class="footer-bottom">
+      <p>© 2024 BU Assistant. Not affiliated with any university. Made with caffeine and spite.</p>
+      <p style="margin-top:0.5rem; font-size:0.8rem;">If you're reading this, you should probably check your attendance.</p>
     </div>
   </div>
 </footer>
 
-<!-- TOAST -->
-<!-- MODAL FOR LEAD CAPTURE -->
-<div class="modal-ov" id="modal">
-  <div class="modal-box">
-    <button class="modal-x" id="mClose">✕</button>
+<div class="konami">↑↑↓↓←→←→BA</div>
 
-    <!-- Step 1: Who are you -->
-    <div id="step1">
-      <h3>Who are you?</h3>
-      <div class="modal-sub">Select your role to continue</div>
-      <div class="who-grid">
-        <button class="who-btn" data-role="student"><span class="who-icon">🎓</span>Student</button>
-        <button class="who-btn" data-role="faculty"><span class="who-icon">👨‍🏫</span>Faculty</button>
-        <button class="who-btn" data-role="staff"><span class="who-icon">🏢</span>Staff</button>
-        <button class="who-btn" data-role="alumni"><span class="who-icon">🎓</span>Alumni</button>
-      </div>
+<script>
+  // Custom cursor
+  const cursorDot = document.querySelector('.cursor-dot');
+  const cursorOutline = document.querySelector('.cursor-outline');
+  
+  window.addEventListener('mousemove', (e) => {
+    const posX = e.clientX;
+    const posY = e.clientY;
+    
+    cursorDot.style.left = `${posX}px`;
+    cursorDot.style.top = `${posY}px`;
+    
+    cursorOutline.animate({
+      left: `${posX}px`,
+      top: `${posY}px`
+    }, { duration: 500, fill: "forwards" });
+  });
+  
+  // Hover effect for cursor
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursorOutline.style.width = '60px';
+      cursorOutline.style.height = '60px';
+      cursorOutline.style.background = 'rgba(204, 255, 0, 0.1)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursorOutline.style.width = '40px';
+      cursorOutline.style.height = '40px';
+      cursorOutline.style.background = 'transparent';
+    });
+  });
+  
+  // Parallax effect for hero bg text
+  window.addEventListener('scroll', () => {
+    const scrolled = window.pageYOffset;
+    const parallax = document.querySelector('.hero-bg-text');
+    parallax.style.transform = `translateY(${scrolled * 0.5}px)`;
+  });
+  
+  // Glitch effect randomization
+  setInterval(() => {
+    const glitch = document.querySelector('.glitch');
+    if(Math.random() > 0.95) {
+      glitch.style.animation = 'none';
+      setTimeout(() => {
+        glitch.style.animation = '';
+      }, 100);
+    }
+  }, 2000);
+</script>
+
+<!-- Role Selection Modal -->
+<div id="roleModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
+  <div style="background:#0a0a0a; border:2px solid #CCFF00; border-radius:12px; padding:2rem; max-width:400px; width:90%; color:#f5f5f0;">
+    <h2 style="font-family:'Syne', sans-serif; font-size:1.8rem; margin-bottom:1rem; text-transform:uppercase;">Who are you?</h2>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;">
+      <button onclick="selectRole('student')" style="padding:1rem; background:#fff; color:#0a0a0a; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#CCFF00';" onmouseout="this.style.background='#fff';">
+        👨‍🎓 Student
+      </button>
+      <button onclick="selectRole('faculty')" style="padding:1rem; background:#fff; color:#0a0a0a; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#CCFF00';" onmouseout="this.style.background='#fff';">
+        👩‍🏫 Faculty
+      </button>
+      <button onclick="selectRole('admin')" style="padding:1rem; background:#fff; color:#0a0a0a; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#CCFF00';" onmouseout="this.style.background='#fff';">
+        🛡️ Admin
+      </button>
+      <button onclick="selectRole('alumni')" style="padding:1rem; background:#fff; color:#0a0a0a; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#CCFF00';" onmouseout="this.style.background='#fff';">
+        🎓 Alumni
+      </button>
     </div>
-
-    <!-- Step 2: Student email + checkout -->
-    <div id="step2">
-      <h3 id="mTitle">Download BU Assistant</h3>
-      <div class="modal-sub">free during beta · just testing ui</div>
-      <div class="modal-tag" id="mTag"></div>
-      <div class="modal-field"><label>Your email</label><input type="email" id="emailIn" placeholder="@gmail.com or @student.bahria.edu.pk" autocomplete="email"></div>
-      <div class="modal-info"><p>Enter the same email at checkout and verification .
-        you'll get instant access to the app. download link sent to your email.</p></div>
-      <button class="btn-pay" id="btnPay">Get App Free →</button>
-      <div class="modal-trust"><span>🔒 Secure</span><span>⚡ Instant Link</span><span>📱 Android</span></div>
-      <button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:10px;display:block;width:100%;text-align:center" id="btnBack">← Back</button>
-    </div>
-
-    <!-- Not a student -->
-    <div id="stepNotStudent">
-      <div class="not-student-msg">
-        <div class="ns-icon">👋</div>
-        <h3>Welcome!</h3>
-        <p>BU Assistant is built for Bahria Uni students, but teachers & staff can check it out too.<br><br>Enter your email to continue.</p>
+    
+    <div id="emailStep" style="display:none;">
+      <label style="display:block; margin-bottom:0.5rem; font-weight:600;">What's your email?</label>
+      <input id="emailInput" type="email" placeholder="you@example.com" style="width:100%; padding:0.8rem; border:1px solid #CCFF00; background:#1a1a1a; color:#f5f5f0; border-radius:6px; margin-bottom:1rem; font-size:0.95rem;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+        <button onclick="closeRoleModal()" style="padding:0.8rem; background:transparent; border:1px solid #CCFF00; color:#CCFF00; border-radius:6px; cursor:pointer; font-weight:600;">Back</button>
+        <button onclick="proceedToCheckout()" style="padding:0.8rem; background:#CCFF00; color:#0a0a0a; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Proceed</button>
       </div>
-      <div class="modal-field" style="margin-top:14px"><label>Your email</label><input type="email" id="emailInOther" placeholder="ur@email.com" autocomplete="email"></div>
-      <button class="btn-pay" id="btnPayOther">Get App Free →</button>
-      <button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:10px;display:block;width:100%;text-align:center" id="btnBack2">← Back</button>
     </div>
   </div>
 </div>
 
-<div id="toast" class="toast"></div>
-
 <script>
-const LEMONSQUEEZY_CONFIG = {
-    BASIC: {
-        plan: 'basic',
-        product_id: 'a8dca598-9364-4ee1-85fc-7c90c9e95633',
-        checkout_url: 'https://devpostai.lemonsqueezy.com/checkout/buy',
-        apk: 'BU_Assistant_v1.1.0_BASIC.apk',
-        price: 0
-    }
-};
+function openRoleModal() {
+  const modal = document.getElementById('roleModal');
+  modal.style.display = 'flex';
+  document.getElementById('emailStep').style.display = 'none';
+}
 
-const CHECKOUT_URL = 'https://devpostai.lemonsqueezy.com/checkout/buy/a8dca598-9364-4ee1-85fc-7c90c9e95633';
-const modal = document.getElementById('modal');
-let selectedRole = 'student';
+function closeRoleModal() {
+  document.getElementById('roleModal').style.display = 'none';
+  document.getElementById('emailStep').style.display = 'none';
+}
 
-document.addEventListener('DOMContentLoaded', () => {
-    setupPaymentButtons();
-    setupModalHandlers();
+function selectRole(role) {
+  sessionStorage.setItem('selectedRole', role);
+  document.getElementById('emailStep').style.display = 'block';
+  document.getElementById('emailInput').focus();
+}
+
+function proceedToCheckout() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email address');
+    return;
+  }
+  
+  sessionStorage.setItem('userEmail', email);
+  const role = sessionStorage.getItem('selectedRole') || 'student';
+  
+  fetch('https://buic-backend-v2.vercel.app/api/track-download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, role, ts: Date.now() })
+  }).catch(err => console.error(err));
+  
+  // Get current domain for redirect URL
+  const currentDomain = window.location.origin;
+  const successUrl = currentDomain + '/verify-payment.html';
+  
+  // Redirect to checkout with email parameter and success redirect
+  const checkoutUrl = 'https://devpostai.lemonsqueezy.com/checkout/buy/a8dca598-9364-4ee1-85fc-7c90c9e95633?email=' + encodeURIComponent(email) + '&redirect=' + encodeURIComponent(successUrl);
+  window.location.href = checkoutUrl;
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('roleModal');
+  if (event.target === modal) {
+    closeRoleModal();
+  }
 });
-
-function setupPaymentButtons() {
-    const buyButtons = document.querySelectorAll('.btn-buy');
-    buyButtons.forEach(btn => {
-        btn.addEventListener('click', openModal);
-    });
-}
-
-function setupModalHandlers() {
-    document.getElementById('mClose').onclick = () => modal.classList.remove('open');
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-    
-    // Who are you buttons
-    document.querySelectorAll('.who-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedRole = btn.dataset.role;
-            document.querySelectorAll('.who-btn').forEach(w => w.classList.remove('selected'));
-            btn.classList.add('selected');
-            
-            const roleLabel = btn.textContent.trim();
-            document.getElementById('mTag').textContent = '✨ ' + roleLabel;
-            
-            if (selectedRole === 'student') {
-                showStep('step2');
-            } else {
-                showStep('stepNotStudent');
-            }
-        });
-    });
-    
-    // Back buttons
-    document.getElementById('btnBack').onclick = () => showStep('step1');
-    document.getElementById('btnBack2').onclick = () => showStep('step1');
-    
-    // Proceed buttons
-    document.getElementById('btnPay').onclick = () => {
-        const email = document.getElementById('emailIn').value.trim();
-        if (!email || !email.includes('@')) { 
-            showToast('Please enter a valid email address.'); 
-            return; 
-        }
-        trackAndRedirect(email, 'student');
-    };
-    
-    document.getElementById('btnPayOther').onclick = () => {
-        const email = document.getElementById('emailInOther').value.trim();
-        if (!email || !email.includes('@')) { 
-            showToast('Please enter a valid email address.'); 
-            return; 
-        }
-        trackAndRedirect(email, selectedRole);
-    };
-}
-
-function openModal(e) {
-    e.preventDefault();
-    showStep('step1');
-    document.querySelectorAll('.who-btn').forEach(w => w.classList.remove('selected'));
-    document.getElementById('emailIn').value = '';
-    document.getElementById('emailInOther').value = '';
-    document.getElementById('mTag').textContent = '';
-    modal.classList.add('open');
-}
-
-function showStep(id) {
-    ['step1','step2','stepNotStudent'].forEach(s => document.getElementById(s).style.display = s === id ? 'block' : 'none');
-}
-
-function trackAndRedirect(email, role) {
-    console.log('🛒 CHECKOUT INITIATED:', { email, role, timestamp: new Date().toISOString() });
-    
-    // Track the lead on backend
-    fetch('https://buic-backend-v2.vercel.app/api/track-download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role, ts: Date.now() })
-    })
-    .then(res => {
-        console.log('✅ Checkout tracked on backend');
-        console.log('🔗 Redirecting to Lemonsqueezy:', CHECKOUT_URL);
-    })
-    .catch(err => {
-        console.error('❌ Failed to track checkout:', err);
-    });
-    
-    showToast('Redirecting to secure checkout...');
-    setTimeout(() => { 
-        window.location.href = CHECKOUT_URL + '?checkout[email]=' + encodeURIComponent(email); 
-    }, 600);
-}
-
-function showToast(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    
-    toast.textContent = message;
-    toast.className = `show ${type}`;
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
 </script>
+
 </body>
-</html>

@@ -11,316 +11,405 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download BU Assistant - Payment Confirmed</title>
+    <title>GET YOUR APK — BU Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .download-section {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --slime: #CCFF00;
+            --hot-pink: #FF006E;
+            --cyan: #00F5FF;
+            --void: #0a0a0a;
+            --off-white: #f5f5f0;
+            --warning: #FF4D00;
+            --dark-gray: #111;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--void);
+            color: var(--off-white);
+            overflow-x: hidden;
+            cursor: crosshair;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #0E5CAD 0%, #1B76D0 100%);
-            color: white;
             padding: 20px;
         }
-        .download-card {
-            background: white;
-            color: #122033;
-            padding: 60px 40px;
-            border-radius: 24px;
-            text-align: center;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+        ::selection {
+            background: var(--slime);
+            color: var(--void);
         }
-        .check-icon {
-            font-size: 80px;
-            margin-bottom: 24px;
-            animation: bounce 0.6s;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        .download-card h1 {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            color: #2E7D32;
-        }
-        .download-card p {
-            color: #5B6B7E;
-            margin-bottom: 32px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .plan-info {
-            background: #F4F7FB;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 32px;
-            text-align: left;
-        }
-        .plan-info strong {
-            color: #0E5CAD;
-        }
-        .download-btn {
-            background: linear-gradient(135deg, #0E5CAD, #1B76D0);
-            color: white;
-            padding: 18px 40px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
+
+        /* Noise overlay */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            margin-bottom: 12px;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(14, 92, 173, 0.3);
+
+        /* Typography */
+        h1, h2 {
+            font-family: 'Syne', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            line-height: 0.9;
         }
-        .email-btn {
-            background: transparent;
-            color: #0E5CAD;
-            border: 2px solid #0E5CAD;
-        }
-        .email-btn:hover {
-            background: #F4F7FB;
-        }
-        .security-note {
-            background: #E3F2FD;
-            border-left: 4px solid #0E5CAD;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #1565C0;
-            margin-top: 24px;
-        }
-        .loading {
-            display: none;
+
+        .glitch {
+            position: relative;
+            color: var(--slime);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
             text-align: center;
+            font-weight: 800;
         }
-        .spinner {
-            border: 4px solid #F4F7FB;
-            border-top: 4px solid #0E5CAD;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+
+        /* Container */
+        .download-card {
+            background: var(--dark-gray);
+            border: 2px solid var(--slime);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 10px 10px 0 var(--cyan);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .download-card::before {
+            content: 'SYS_DL_NODE';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--void);
+            padding: 0 10px;
+            color: var(--hot-pink);
+            font-size: 0.8rem;
+            font-family: monospace;
+            border: 1px solid var(--hot-pink);
         }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-align: left;
         }
+
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #0E5CAD;
-            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: var(--off-white);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        .form-group input {
+
+        .form-group input[type="text"],
+        .form-group input[type="email"] {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #0E5CAD;
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
+            padding: 16px;
+            background: var(--void);
+            border: 1px solid var(--off-white);
+            color: var(--slime);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
+
         .form-group input:focus {
             outline: none;
-            border-color: #1B76D0;
-            box-shadow: 0 0 0 3px rgba(14, 92, 173, 0.1);
+            border-color: var(--slime);
+            background: rgba(204, 255, 0, 0.05);
+            box-shadow: 4px 4px 0 var(--hot-pink);
         }
+
         .radio-group {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
         }
+
         .radio-option {
             flex: 1;
         }
+
         .radio-option input[type="radio"] {
             display: none;
         }
+
         .radio-label {
             display: block;
             padding: 12px;
-            border: 2px solid #DDD;
-            border-radius: 8px;
+            border: 1px solid var(--off-white);
             text-align: center;
             cursor: pointer;
             font-weight: 600;
-            color: #5B6B7E;
-            transition: all 0.3s;
+            color: var(--off-white);
+            transition: all 0.2s;
+            text-transform: uppercase;
+            font-size: 0.9rem;
         }
+
         .radio-option input[type="radio"]:checked + .radio-label {
-            border-color: #0E5CAD;
-            background: #F4F7FB;
-            color: #0E5CAD;
+            border-color: var(--slime);
+            background: var(--slime);
+            color: var(--void);
+            box-shadow: 4px 4px 0 var(--cyan);
         }
+
+        .note {
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            border-left: 4px solid;
+            line-height: 1.4;
+        }
+
         .warning-note {
-            background: #FFF3CD;
-            border-left: 4px solid #FFC107;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            color: #856404;
-            margin-top: 12px;
-            line-height: 1.5;
+            background: rgba(255, 0, 110, 0.1);
+            border-color: var(--hot-pink);
+            color: var(--hot-pink);
         }
+
         .privacy-note {
-            background: #E8F5E9;
-            border-left: 4px solid #4CAF50;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            color: #2E7D32;
-            margin-top: 12px;
-            line-height: 1.5;
+            background: rgba(0, 245, 255, 0.1);
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        .download-btn {
+            background: var(--slime);
+            color: var(--void);
+            padding: 20px;
+            border: none;
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 10px;
+            display: block;
+            text-align: center;
+        }
+
+        .download-btn:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 8px 8px 0 var(--hot-pink);
+        }
+        
+        .download-btn:active {
+            transform: translate(0, 0);
+            box-shadow: 0 0 0 var(--hot-pink);
+        }
+
+        .email-btn {
+            background: transparent;
+            color: var(--cyan);
+            border: 1px solid var(--cyan);
+        }
+
+        .email-btn:hover {
+            background: var(--cyan);
+            color: var(--void);
+            box-shadow: 8px 8px 0 var(--slime);
+        }
+
+        .security-note {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--slime);
+            padding: 16px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 24px;
+            font-family: monospace;
+        }
+
+        .security-note strong {
+            color: var(--slime);
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--slime);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .check-icon {
+            font-size: 60px;
+            margin-bottom: 24px;
+            color: var(--slime);
+            text-shadow: 4px 4px 0 var(--hot-pink);
+        }
+
+        #loadingState, #successState, #errorState {
+            text-align: center;
+        }
+
+        #errorState h1 {
+            color: var(--hot-pink);
         }
     </style>
 </head>
 <body>
-    <div class="download-section">
-        <div class="download-card">
-            <!-- FORM STATE: Collect email -->
-            <div id="formState">
-                <h1 style="color:#0E5CAD;margin-bottom:24px;">Get Your APK</h1>
-                
-                <form onsubmit="handleSubmit(event)">
-                    <!-- Who are you? -->
-                    <div class="form-group" style="text-align: center;">
-                        <label style="text-align: left; display: block; margin-bottom: 12px;">Who are you?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="student" name="userType" value="student" checked>
-                                <label for="student" class="radio-label">👨‍🎓 Student</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="other" name="userType" value="other">
-                                <label for="other" class="radio-label">👤 Other</label>
-                            </div>
+    <div class="noise"></div>
+
+    <div class="download-card">
+        <!-- FORM STATE: Collect email -->
+        <div id="formState">
+            <h1 class="glitch" data-text="GET YOUR APK">GET YOUR APK</h1>
+            
+            <form onsubmit="handleSubmit(event)" id="downloadForm">
+                <div class="form-group">
+                    <label>IDENTIFY YOURSELF_</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="student" name="userType" value="student" checked onchange="toggleEnrollmentField()">
+                            <label for="student" class="radio-label">👨‍🎓 Student</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="other" name="userType" value="other" onchange="toggleEnrollmentField()">
+                            <label for="other" class="radio-label">👤 Other</label>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Email input -->
-                    <div class="form-group">
-                        <label for="email">Email Address *</label>
-                        <input type="email" id="email" name="email" placeholder="your@email.com" required>
-                        <div class="warning-note">
-                            ⚠️ <strong>Enter email carefully</strong> - This will be used to verify your payment.<br>
-                            Make sure it matches the email used during checkout.
-                        </div>
+                <div class="form-group">
+                    <label for="email">SYS_EMAIL *</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                    <div class="note warning-note">
+                        ⚠️ <strong>CRITICAL:</strong> Must match your checkout email exactly for the verification handshake to succeed.
                     </div>
+                </div>
 
-                    <!-- Enrollment ID input (only for students) -->
-                    <div id="enrollmentGroup" class="form-group">
-                        <label for="enrollment">Enrollment ID *</label>
-                        <input type="text" id="enrollment" name="enrollment" placeholder="Your BU enrollment ID" required>
-                        <div class="privacy-note">
-                            🔒 <strong>Device-locked access:</strong> Your enrollment ID locks this download to this device. Other devices cannot use the same enrollment.
-                        </div>
+                <div id="enrollmentGroup" class="form-group">
+                    <label for="enrollment">ENROLLMENT_ID *</label>
+                    <input type="text" id="enrollment" name="enrollment" placeholder="Your BU ID" required>
+                    <div class="note privacy-note">
+                        🔒 <strong>HARDWARE BIND:</strong> Target APK is securely hashed and bound to current device ID.
                     </div>
+                </div>
 
-                    <!-- Submit button -->
-                    <button type="submit" class="download-btn" style="margin-top: 24px;">
-                        ✓ Verify & Download
-                    </button>
-                </form>
-            </div>
-
-            <!-- LOADING STATE: Verifying payment -->
-            <div id="loadingState" style="display:none;">
-                <div class="spinner"></div>
-                <h1>Verifying Your Purchase...</h1>
-                <p>Please wait while we confirm your payment.</p>
-            </div>
-
-            <!-- SUCCESS STATE: Download started -->
-            <div id="successState" style="display:none;">
-                <div class="check-icon">✓</div>
-                <h1>Download Started!</h1>
-                <p>Your BU Assistant APK is downloading. If it didn't start, check your Downloads folder.</p>
-            </div>
-
-            <!-- ERROR STATE: Payment not found -->
-            <div id="errorState" style="display:none;">
-                <h1 style="color:#C0392B;">Download Failed</h1>
-                <p id="errMsg" style="color:#C0392B;margin:16px 0;"></p>
-                <button class="download-btn email-btn" onclick="resetForm()" style="border-color:#0E5CAD;color:#0E5CAD;margin-top:12px;">
-                    ↻ Try Again
+                <button type="submit" class="download-btn">
+                    INITIATE_DOWNLOAD //
                 </button>
-            </div>
+            </form>
+        </div>
 
-            <div class="security-note" style="margin-top:20px;">
-                <strong>� Security Features:</strong><br><br>
-                ✓ <strong>Device-locked:</strong> This download is locked to this specific device using your enrollment ID.<br>
-                ✓ <strong>Email verified:</strong> Only emails with valid payments can download.<br>
-                ✓ <strong>One-time tokens:</strong> Download links expire after 1 hour.<br><br>
-                <strong>�📱 Android install steps:</strong><br><br>
-                Open <strong>Files / My Files</strong> → <strong>Downloads</strong> → tap <strong>BU_Assistant.apk</strong> → tap <strong>Install</strong>.<br><br>
-                If asked about "unknown sources": <strong>Settings → Apps → (your browser) → Install Unknown Apps → Allow</strong>.
-            </div>
+        <!-- LOADING STATE: Verifying payment -->
+        <div id="loadingState" style="display:none;">
+            <div class="spinner"></div>
+            <h1>VERIFYING...</h1>
+            <p style="font-family: monospace; color: var(--cyan); margin-top: 1rem;">Decrypting credentials against ledger...</p>
+        </div>
+
+        <!-- SUCCESS STATE: Download started -->
+        <div id="successState" style="display:none;">
+            <div class="check-icon">⚡</div>
+            <h1>INJECTED</h1>
+            <p style="font-family: monospace; color: var(--off-white); margin-top: 1rem;">Payload deployed. Check your device's Downloads directory.</p>
+        </div>
+
+        <!-- ERROR STATE: Payment not found -->
+        <div id="errorState" style="display:none;">
+            <h1 class="glitch" data-text="AUTH FAILED">AUTH FAILED</h1>
+            <p id="errMsg" style="font-family: monospace; color: var(--hot-pink); margin: 16px 0; font-weight: bold;"></p>
+            <button class="download-btn email-btn" onclick="resetForm()">
+                [ RETRY AUTH ]
+            </button>
+        </div>
+
+        <div class="security-note">
+            <strong>SYS_LOG:</strong><br><br>
+            > <strong>DEVICE_LOCK:</strong> DL bound to client node.<br>
+            > <strong>EMAIL_VERIFIED:</strong> Secure ledger connection.<br>
+            > <strong>ONE_TIME_TOKEN:</strong> Destructs in 3600s.<br><br>
+            <strong>ANDROID_INSTALL:</strong><br>
+            [1] <strong>Files</strong> > <strong>Downloads</strong> > tap <strong>BU_Assistant.apk</strong><br>
+            [2] Allow <strong>Unknown Sources</strong> in settings if blocked.<br>
+            [3] Execute install.
         </div>
     </div>
 
     <script>
         const BACKEND = 'https://buic-backend-v2.vercel.app';
 
-        // Generate or retrieve persistent device hash
+        // Auto-fill from sessionStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedEmail = sessionStorage.getItem('userEmail');
+            if (savedEmail) document.getElementById('email').value = savedEmail;
+            
+            const savedRole = sessionStorage.getItem('selectedRole');
+            if (savedRole === 'other') {
+                document.getElementById('other').checked = true;
+                toggleEnrollmentField();
+            }
+        });
+
         function getDeviceHash() {
             let hash = localStorage.getItem('device_hash');
             if (!hash) {
-                // Generate unique device ID (persistent across sessions)
                 hash = 'device_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
                 localStorage.setItem('device_hash', hash);
-                console.log('🔐 New device hash generated:', hash.substring(0, 20) + '...');
-            } else {
-                console.log('🔐 Using existing device hash:', hash.substring(0, 20) + '...');
+                console.log('🔐 Generated hw_signature:', hash.substring(0, 15) + '...');
             }
             return hash;
         }
 
-        function showForm() {
-            document.getElementById('formState').style.display = 'block';
+        function toggleEnrollmentField() {
+            const isStudent = document.getElementById('student').checked;
+            const group = document.getElementById('enrollmentGroup');
+            const input = document.getElementById('enrollment');
+            if (isStudent) {
+                group.style.display = 'block';
+                input.required = true;
+            } else {
+                group.style.display = 'none';
+                input.required = false;
+            }
+        }
+
+        function showState(stateId) {
+            document.getElementById('formState').style.display = 'none';
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('successState').style.display = 'none';
             document.getElementById('errorState').style.display = 'none';
-        }
-
-        function showLoading() {
-            document.getElementById('formState').style.display = 'none';
-            document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('successState').style.display = 'none';
-            document.getElementById('errorState').style.display = 'none';
-        }
-
-        function showSuccess() {
-            document.getElementById('formState').style.display = 'none';
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('successState').style.display = 'block';
-            document.getElementById('errorState').style.display = 'none';
+            document.getElementById(stateId).style.display = 'block';
         }
 
         function showError(message) {
-            document.getElementById('formState').style.display = 'none';
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('successState').style.display = 'none';
-            document.getElementById('errorState').style.display = 'block';
-            document.getElementById('errMsg').textContent = message;
+            showState('errorState');
+            document.getElementById('errMsg').textContent = `ERR: ${message}`;
         }
 
         function resetForm() {
-            document.getElementById('email').value = '';
-            document.getElementById('enrollment').value = '';
-            document.getElementById('student').checked = true;
-            showForm();
+            document.getElementById('downloadForm').reset();
+            const savedEmail = sessionStorage.getItem('userEmail');
+            if (savedEmail) document.getElementById('email').value = savedEmail;
+            toggleEnrollmentField();
+            showState('formState');
         }
 
         function triggerDownload(url) {
@@ -341,30 +430,20 @@
             const deviceHash = getDeviceHash();
 
             if (!email || !email.includes('@')) {
-                showError('Please enter a valid email address.');
+                showError('INVALID_EMAIL_FORMAT');
                 return;
             }
 
-            // Enrollment ID only required for students
             if (role === 'student' && !enrollment) {
-                showError('Please enter your enrollment ID.');
+                showError('MISSING_ENROLLMENT_ID');
                 return;
             }
 
-            showLoading();
+            showState('loadingState');
 
             try {
-                // Triple-lock verification: email + enrollment (for students) + role + device
-                const requestBody = { 
-                    email,
-                    deviceHash,
-                    role
-                };
-                
-                // Add enrollment only for students
-                if (role === 'student') {
-                    requestBody.enrollment = enrollment;
-                }
+                const requestBody = { email, deviceHash, role };
+                if (role === 'student') requestBody.enrollment = enrollment;
                 
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
@@ -374,7 +453,7 @@
 
                 if (!resp.ok) {
                     const data = await resp.json();
-                    throw new Error(data.error || 'Verification failed');
+                    throw new Error(data.error || 'SYS_AUTH_FAIL');
                 }
 
                 const data = await resp.json();
@@ -383,42 +462,18 @@
                     email: email,
                     role: role
                 });
-                console.log('✅ Download authorized - Triple lock verified:', data.security);
+                console.log('✅ TRIPLE_LOCK_PASS:', data.security);
                 
                 triggerDownload(data.url);
-                showSuccess();
+                showState('successState');
             } catch (e) {
-                console.error('Download error:', e);
-                showError(`❌ ${e.message}`);
+                console.error('Core Exception:', e);
+                showError(e.message);
             }
         }
-
-        // Show form on page load
-        // Toggle enrollment field visibility based on role
-        function toggleEnrollmentField() {
-            const role = document.querySelector('input[name="userType"]:checked').value;
-            const enrollmentGroup = document.getElementById('enrollmentGroup');
-            const enrollmentInput = document.getElementById('enrollment');
-            
-            if (role === 'student') {
-                enrollmentGroup.style.display = 'block';
-                enrollmentInput.required = true;
-            } else {
-                enrollmentGroup.style.display = 'none';
-                enrollmentInput.required = false;
-                enrollmentInput.value = '';  // Clear enrollment value for non-students
-            }
-        }
-
-        // Add event listeners to radio buttons
-        document.querySelectorAll('input[name="userType"]').forEach(radio => {
-            radio.addEventListener('change', toggleEnrollmentField);
-        });
-
-        window.addEventListener('DOMContentLoaded', () => {
-            toggleEnrollmentField();  // Set initial state
-            showForm();
-        });
+        
+        // Initialize once to ensure correct visibility on hard refresh
+        toggleEnrollmentField();
     </script>
 </body>
 </html>
