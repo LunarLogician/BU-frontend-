@@ -53,3 +53,6 @@ coverage/
 
 # APK files (if storing locally)
 *.apk
+
+
+*.agents
