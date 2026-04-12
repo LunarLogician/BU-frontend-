@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Verified - Download BU Assistant</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6XHQ2721SN"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-6XHQ2721SN');
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --slime: #CCFF00;
+            --hot-pink: #FF006E;
+            --cyan: #00F5FF;
+            --void: #0a0a0a;
+            --off-white: #f5f5f0;
+            --dark-gray: #111;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--void);
+            color: var(--off-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Noise overlay */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            color: var(--slime);
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 0 var(--hot-pink);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--slime);
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            line-height: 0.9;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            color: rgba(245, 245, 240, 0.8);
+        }
+
+        .highlight {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .btn {
+            background: var(--slime);
+            color: var(--void);
+            border: none;
+            padding: 18px 40px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 30px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 0 100%);
+        }
+
+        .btn:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 8px 8px 0 var(--hot-pink);
+        }
+
+        .countdown {
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: var(--cyan);
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 245, 255, 0.1);
+            border: 1px solid var(--cyan);
+            display: inline-block;
+        }
+
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .trust-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .trust-badge .icon {
+            color: var(--slime);
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 16px 30px;
+                font-size: 1rem;
+            }
+            
+            .trust-badges {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    
+    <div class="container">
+        <div class="success-icon">⚡</div>
+        <h1>ACCESS GRANTED</h1>
+        
+        <p>Your free access to <span class="highlight">BU Assistant</span> has been confirmed.</p>
+        <p>We've sent the download link to your email.</p>
+        
+        <div class="countdown" id="countdown">Redirecting in 5 seconds...</div>
+        
+        <a href="download.html" class="btn">DOWNLOAD NOW</a>
+        
+        <div class="trust-badges">
+            <div class="trust-badge">
+                <span class="icon">✓</span> No credit card charged
+            </div>
+            <div class="trust-badge">
+                <span class="icon">✓</span> Free during beta
+            </div>
+            <div class="trust-badge">
+                <span class="icon">✓</span> 40+ students using
+            </div>
+        </div>
+        
+        <p style="margin-top: 30px; font-size: 0.9rem; color: rgba(245, 245, 240, 0.5);">
+            Can't find the email? Check your spam folder or 
+            <a href="download.html" style="color: var(--cyan);">click here to download directly</a>.
+        </p>
+    </div>
+
+    <script>
+        // Countdown timer
+        let seconds = 5;
+        const countdownElement = document.getElementById('countdown');
+        
+        const countdownInterval = setInterval(() => {
+            seconds--;
+            countdownElement.textContent = `Redirecting in ${seconds} second${seconds !== 1 ? 's' : ''}...`;
+            
+            if (seconds <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = 'download.html';
+            }
+        }, 1000);
+        
+        // Track conversion
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'payment_verified', {
+                event_category: 'conversion',
+                event_label: 'verify_payment_page'
+            });
+        }
+        
+        // Auto-fill email from URL parameters if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        if (email) {
+            sessionStorage.setItem('userEmail', email);
+        }
+    </script>
+</body>
+</html>

@@ -193,6 +193,45 @@
             color: var(--cyan);
         }
 
+        .info-note {
+            background: rgba(204, 255, 0, 0.1);
+            border-color: var(--slime);
+            color: var(--slime);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(245, 245, 240, 0.7);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .trust-signals {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: rgba(245, 245, 240, 0.8);
+        }
+
+        .trust-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .trust-item::before {
+            content: '✓';
+            color: var(--slime);
+            font-weight: bold;
+        }
+
         .download-btn {
             background: var(--slime);
             color: var(--void);
@@ -284,40 +323,47 @@
         <!-- FORM STATE: Collect email -->
         <div id="formState">
             <h1 class="glitch" data-text="GET YOUR APK">GET YOUR APK</h1>
+            <p class="subtitle">Enter your details to download BU Assistant</p>
             
             <form onsubmit="handleSubmit(event)" id="downloadForm">
                 <div class="form-group">
-                    <label>IDENTIFY YOURSELF_</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="student" name="userType" value="student" checked onchange="toggleEnrollmentField()">
-                            <label for="student" class="radio-label">👨‍🎓 Student</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="other" name="userType" value="other" onchange="toggleEnrollmentField()">
-                            <label for="other" class="radio-label">👤 Other</label>
-                        </div>
+                    <label for="email">📧 Your Email</label>
+                    <input type="email" id="email" name="email" placeholder="student@email.com" required>
+                    <div class="note info-note">
+                        💡 We'll send the download link to this email
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="email">SYS_EMAIL *</label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
-                    <div class="note warning-note">
-                        ⚠️ <strong>CRITICAL:</strong> Must match your checkout email exactly for the verification handshake to succeed.
+                    <label>👤 Are you a Bahria University student?</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="student" name="userType" value="student" checked onchange="toggleEnrollmentField()">
+                            <label for="student" class="radio-label">Yes, I'm a student</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="other" name="userType" value="other" onchange="toggleEnrollmentField()">
+                            <label for="other" class="radio-label">No, just curious</label>
+                        </div>
                     </div>
                 </div>
 
                 <div id="enrollmentGroup" class="form-group">
-                    <label for="enrollment">ENROLLMENT_ID *</label>
-                    <input type="text" id="enrollment" name="enrollment" placeholder="Your BU ID" required>
-                    <div class="note privacy-note">
-                        🔒 <strong>HARDWARE BIND:</strong> Target APK is securely hashed and bound to current device ID.
+                    <label for="enrollment">🎓 Student ID (Optional)</label>
+                    <input type="text" id="enrollment" name="enrollment" placeholder="BU-12345 or Enrollment Number">
+                    <div class="note info-note">
+                        🔒 Helps us personalize your experience. Your data stays secure.
                     </div>
                 </div>
 
+                <div class="trust-signals">
+                    <div class="trust-item">✓ No credit card required</div>
+                    <div class="trust-item">✓ 40+ students already using</div>
+                    <div class="trust-item">✓ Free during beta</div>
+                </div>
+
                 <button type="submit" class="download-btn">
-                    INITIATE_DOWNLOAD //
+                    GET DOWNLOAD LINK
                 </button>
             </form>
         </div>
@@ -385,13 +431,10 @@
         function toggleEnrollmentField() {
             const isStudent = document.getElementById('student').checked;
             const group = document.getElementById('enrollmentGroup');
-            const input = document.getElementById('enrollment');
             if (isStudent) {
                 group.style.display = 'block';
-                input.required = true;
             } else {
                 group.style.display = 'none';
-                input.required = false;
             }
         }
 
@@ -434,12 +477,7 @@
             const deviceHash = getDeviceHash();
 
             if (!email || !email.includes('@')) {
-                showError('INVALID_EMAIL_FORMAT');
-                return;
-            }
-
-            if (role === 'student' && !enrollment) {
-                showError('MISSING_ENROLLMENT_ID');
+                showError('Please enter a valid email address');
                 return;
             }
 
@@ -447,7 +485,9 @@
 
             try {
                 const requestBody = { email, deviceHash, role };
-                if (role === 'student') requestBody.enrollment = enrollment;
+                if (role === 'student' && enrollment) {
+                    requestBody.enrollment = enrollment;
+                }
                 
                 const resp = await fetch(`${BACKEND}/api/get-download-url`, {
                     method: 'POST',
@@ -457,7 +497,7 @@
 
                 if (!resp.ok) {
                     const data = await resp.json();
-                    throw new Error(data.error || 'SYS_AUTH_FAIL');
+                    throw new Error(data.error || 'Verification failed. Please try again.');
                 }
 
                 const data = await resp.json();
@@ -466,12 +506,17 @@
                     email: email,
                     role: role
                 });
-                console.log('✅ TRIPLE_LOCK_PASS:', data.security);
+                console.log('✅ Download authorized:', data.security);
                 
                 triggerDownload(data.url);
                 showState('successState');
+                
+                // Auto-redirect to home after 5 seconds
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 5000);
             } catch (e) {
-                console.error('Core Exception:', e);
+                console.error('Download error:', e);
                 showError(e.message);
             }
         }
